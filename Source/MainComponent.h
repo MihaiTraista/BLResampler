@@ -9,7 +9,12 @@
 #include "./ZeroCrossingFinder/ZeroCrossingFinder.hpp"
 
 
-class MainComponent  : public juce::AudioAppComponent
+class MainComponent  :  public juce::AudioAppComponent,
+                        public juce::FileDragAndDropTarget,
+                        private juce::Slider::Listener,
+                        public juce::Button::Listener,
+                        public juce::KeyListener,
+                        private juce::ComboBox::Listener
 {
 public:
     //==============================================================================
@@ -24,8 +29,24 @@ public:
     //==============================================================================
     void paint (juce::Graphics& g) override;
     void resized() override;
+    void buttonClicked(juce::Button* button) override;
+
+    inline bool isInterestedInFileDrag (const juce::StringArray& files) override { return true; };
+    void filesDropped (const juce::StringArray& files, int x, int y) override;
+    inline void fileDragEnter (const juce::StringArray& files, int x, int y) override {};
+    inline void fileDragExit (const juce::StringArray& files) override {};
+    bool keyPressed(const juce::KeyPress& key, Component* originatingComponent) override;
 
 private:
+    void sliderValueChanged(juce::Slider* slider) override;
+    void comboBoxChanged(juce::ComboBox* box) override;
+    
+    void addSlidersButtonsAndLabels();
+    void updateLengthInfoLabel();
+    void handleCommitButton();
+    void updateBufferAndRecalculateZeroCrossings(juce::File& audioFile);
+    void normalizeBuffer(juce::AudioBuffer<float>& buffer);
+
     int mStartSampleIndex = 0;
     int mCycleLenHint = 200;
     int mClosestZeroCrossingStart = 0;
@@ -36,6 +57,19 @@ private:
     std::vector<float> mResampledCycles;
 
     juce::AudioBuffer<float> mAudioFileBuffer;
+
+    juce::Slider mStartSampleIndexSlider;
+    juce::Slider mCycleLenHintSlider;
+    juce::Label mCycleLenHintSliderLabel;
+    juce::TextButton mCommitButton;
+    juce::TextButton mSaveResampledFileButton;
+    juce::TextButton mClearResampledCyclesButton;
+    juce::TextButton mNormalizeButton;
+    juce::Label mResampledLengthLabel;
+    juce::Label mEventConfirmationLabel;
+    juce::Label mInstructionsLabel;
+    juce::ComboBox mResampledCycleLengthComboBox;
+    juce::Label mResampledCycleLengthComboBoxLabel;
 
     WaveformDisplay mWaveformDisplay;
     WaveformDisplay mOriginalWaveform;
