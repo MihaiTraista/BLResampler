@@ -1,12 +1,14 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <vector>
 
-//==============================================================================
-/*
-    This component lives inside our window, and this is where you should put all
-    your controls and content.
-*/
+#include "./WaveformDisplay/WaveformDisplay.hpp"
+#include "./FileHandler/FileHandler.hpp"
+#include "./Resampler/Resampler.hpp"
+#include "./ZeroCrossingFinder/ZeroCrossingFinder.hpp"
+
+
 class MainComponent  : public juce::AudioAppComponent
 {
 public:
@@ -24,8 +26,23 @@ public:
     void resized() override;
 
 private:
-    //==============================================================================
-    // Your private member variables go here...
+    int mStartSampleIndex = 0;
+    int mCycleLenHint = 200;
+    int mClosestZeroCrossingStart = 0;
+    int mClosestZeroCrossingEnd = 0;
+
+    std::vector<bool> mZeroCrossings;
+    std::vector<bool> mVectorThatShowsWhichSamplesAreCommitted;
+    std::vector<float> mResampledCycles;
+
+    juce::AudioBuffer<float> mAudioFileBuffer;
+
+    WaveformDisplay mWaveformDisplay;
+    WaveformDisplay mOriginalWaveform;
+    
+    std::unique_ptr<FileHandler> pFileHandler = std::make_unique<FileHandler>();
+    std::unique_ptr<Resampler> pResampler = std::make_unique<Resampler>();
+    std::unique_ptr<ZeroCrossingFinder> pZeroCrossingFinder = std::make_unique<ZeroCrossingFinder>();
 
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)

@@ -1,7 +1,16 @@
 #include "MainComponent.h"
 
 //==============================================================================
-MainComponent::MainComponent()
+MainComponent::MainComponent():
+    mWaveformDisplay(&mAudioFileBuffer,
+                     &mZeroCrossings,
+                     &mVectorThatShowsWhichSamplesAreCommitted,
+                     &mStartSampleIndex,
+                     &mCycleLenHint,
+                     &mClosestZeroCrossingStart,
+                     &mClosestZeroCrossingEnd),
+    mOriginalWaveform(&mAudioFileBuffer)
+
 {
     // Make sure you set the size of the component after
     // you add any child components.

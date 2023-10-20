@@ -4,6 +4,26 @@
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
   <MAINGROUP id="LyixqN" name="BLResampler">
     <GROUP id="{9E17AB2C-4885-DB41-1B2E-9EB4365D5891}" name="Source">
+      <GROUP id="{AC44D4D1-998D-53D0-C6E1-58BA55F034C7}" name="FileHandler">
+        <FILE id="OAh97u" name="FileHandler.cpp" compile="1" resource="0" file="Source/FileHandler/FileHandler.cpp"/>
+        <FILE id="VdwZck" name="FileHandler.hpp" compile="0" resource="0" file="Source/FileHandler/FileHandler.hpp"/>
+      </GROUP>
+      <GROUP id="{6C403E69-6D54-000D-FF0B-94269BA4477B}" name="Resampler">
+        <FILE id="hNgsxl" name="Resampler.cpp" compile="1" resource="0" file="Source/Resampler/Resampler.cpp"/>
+        <FILE id="XB0B6b" name="Resampler.hpp" compile="0" resource="0" file="Source/Resampler/Resampler.hpp"/>
+      </GROUP>
+      <GROUP id="{B3E30511-6988-83C4-8384-657FB02B7135}" name="WaveformDisplay">
+        <FILE id="iDlGmb" name="WaveformDisplay.cpp" compile="1" resource="0"
+              file="Source/WaveformDisplay/WaveformDisplay.cpp"/>
+        <FILE id="aqB0hm" name="WaveformDisplay.hpp" compile="0" resource="0"
+              file="Source/WaveformDisplay/WaveformDisplay.hpp"/>
+      </GROUP>
+      <GROUP id="{816B645C-3D04-9839-BFB6-83730CAE36FB}" name="ZeroCrossingFinder">
+        <FILE id="l2No7m" name="ZeroCrossingFinder.cpp" compile="1" resource="0"
+              file="Source/ZeroCrossingFinder/ZeroCrossingFinder.cpp"/>
+        <FILE id="UpL4GO" name="ZeroCrossingFinder.hpp" compile="0" resource="0"
+              file="Source/ZeroCrossingFinder/ZeroCrossingFinder.hpp"/>
+      </GROUP>
       <FILE id="xrgeBE" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
       <FILE id="eiWrb4" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
       <FILE id="A5ae0Y" name="MainComponent.cpp" compile="1" resource="0"
