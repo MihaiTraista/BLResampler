@@ -4,6 +4,10 @@
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
   <MAINGROUP id="LyixqN" name="BLResampler">
     <GROUP id="{9E17AB2C-4885-DB41-1B2E-9EB4365D5891}" name="Source">
+      <GROUP id="{7E56B31E-E2F1-FA5D-CFCA-86D9A3D07FD8}" name="Playback">
+        <FILE id="z3H2aB" name="Playback.cpp" compile="1" resource="0" file="Source/Playback/Playback.cpp"/>
+        <FILE id="FVcZU2" name="Playback.hpp" compile="0" resource="0" file="Source/Playback/Playback.hpp"/>
+      </GROUP>
       <GROUP id="{6691F895-720E-5467-DC34-6BA3B4079EB1}" name="Globals">
         <FILE id="lUt34Z" name="Globals.cpp" compile="1" resource="0" file="Source/Globals/Globals.cpp"/>
         <FILE id="WiTm4n" name="Globals.hpp" compile="0" resource="0" file="Source/Globals/Globals.hpp"/>

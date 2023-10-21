@@ -9,6 +9,7 @@
 #include "./ZeroCrossingFinder/ZeroCrossingFinder.hpp"
 #include "./Globals/Globals.hpp"
 #include "./Fourier/Fourier.hpp"
+#include "./Playback/Playback.hpp"
 
 class MainComponent  :  public juce::AudioAppComponent,
                         public juce::FileDragAndDropTarget,
@@ -18,6 +19,12 @@ class MainComponent  :  public juce::AudioAppComponent,
                         private juce::ComboBox::Listener
 {
 public:
+    enum class PlaybackStates{
+        Stopped,
+        PlayingResampled,
+        PlayingResynthesized
+    };
+    
     //==============================================================================
     MainComponent();
     ~MainComponent() override;
@@ -49,17 +56,20 @@ private:
     void normalizeBuffer(juce::AudioBuffer<float>& buffer);
 
     int mStartSampleIndex = 0;
-    int mCycleLenHint = 200;
+    int mCycleLenHint = 600;
     int mClosestZeroCrossingStart = 0;
     int mClosestZeroCrossingEnd = 0;
 
     std::vector<bool> mZeroCrossings;
     std::vector<bool> mVectorThatShowsWhichSamplesAreCommitted;
+
     std::vector<float> mResampledCycles;
     std::vector<float> mPolarCycles;
     std::vector<float> mResynthesizedCycles;
 
     juce::AudioBuffer<float> mAudioFileBuffer;
+    
+    PlaybackStates mPlaybackState = PlaybackStates::Stopped;
 
     juce::Slider mStartSampleIndexSlider;
     juce::Slider mCycleLenHintSlider;
@@ -73,6 +83,8 @@ private:
     juce::Label mInstructionsLabel;
     juce::ComboBox mResampledCycleLengthComboBox;
     juce::Label mResampledCycleLengthComboBoxLabel;
+    juce::TextButton mPlayResampledButton;
+    juce::TextButton mPlayResynthesizedButton;
 
     WaveformDisplay mWaveformDisplay;
     WaveformDisplay mOriginalWaveform;
@@ -80,7 +92,7 @@ private:
     std::unique_ptr<FileHandler> pFileHandler = std::make_unique<FileHandler>();
     std::unique_ptr<Resampler> pResampler = std::make_unique<Resampler>();
     std::unique_ptr<ZeroCrossingFinder> pZeroCrossingFinder = std::make_unique<ZeroCrossingFinder>();
-
+    std::unique_ptr<Playback> pPlayback;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

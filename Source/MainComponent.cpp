@@ -9,7 +9,8 @@ MainComponent::MainComponent():
                      &mCycleLenHint,
                      &mClosestZeroCrossingStart,
                      &mClosestZeroCrossingEnd),
-    mOriginalWaveform(&mAudioFileBuffer)
+    mOriginalWaveform(&mAudioFileBuffer),
+    pPlayback(std::make_unique<Playback>(mResampledCycles, mPolarCycles, mResynthesizedCycles))
 {
     setSize (800, 600);
 
@@ -25,7 +26,7 @@ MainComponent::MainComponent():
     // /Users/mihaitraista/5.Sound Libraries/fl1.wav
     // /Users/mihaitraista/4.Projects/Coding/JUCE/CycleChopper/Resources/Cello_C2_1.wav
     juce::File audioFile = juce::File("/Users/mihaitraista/4.Projects/Coding/JUCE/CycleChopper/Resources/Cello_C2_1.wav");
-    
+
     updateBufferAndRecalculateZeroCrossings(audioFile);
     
     addSlidersButtonsAndLabels();
@@ -72,7 +73,7 @@ void MainComponent::addSlidersButtonsAndLabels(){
     mCycleLenHintSlider.setSliderStyle(juce::Slider::LinearBar);
     // backgroundColourId none
     mCycleLenHintSlider.setRange(10, 4000, 1);
-    mCycleLenHintSlider.setValue(200);
+    mCycleLenHintSlider.setValue(600);
     mCycleLenHintSlider.addListener(this);
     
     addAndMakeVisible(mCycleLenHintSliderLabel);
@@ -145,6 +146,16 @@ void MainComponent::addSlidersButtonsAndLabels(){
     mResampledCycleLengthComboBoxLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
     mResampledCycleLengthComboBoxLabel.attachToComponent(&mResampledCycleLengthComboBox, true);
     addAndMakeVisible(mResampledCycleLengthComboBoxLabel);
+    
+    // Play Resampled Button
+    mPlayResampledButton.setButtonText("Play Resampled");
+    mPlayResampledButton.addListener(this);
+    addAndMakeVisible(mPlayResampledButton);
+
+    // Play Resynthesized Button
+    mPlayResynthesizedButton.setButtonText("Play Resynthesized");
+    mPlayResynthesizedButton.addListener(this);
+    addAndMakeVisible(mPlayResynthesizedButton);
 }
 
 void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
@@ -153,7 +164,12 @@ void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRat
 
 void MainComponent::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill)
 {
-    bufferToFill.clearActiveBufferRegion();
+    if(mPlaybackState == PlaybackStates::PlayingResampled)
+        pPlayback->audioCallback(bufferToFill, mResampledCycles);
+    else if (mPlaybackState == PlaybackStates::PlayingResynthesized)
+        pPlayback->audioCallback(bufferToFill, mResynthesizedCycles);
+    else
+        bufferToFill.clearActiveBufferRegion();
 }
 
 void MainComponent::releaseResources()
@@ -180,11 +196,14 @@ void MainComponent::resized()
     mSaveResampledFileButton.setBounds(290, 40, 80, 30);
     mClearResampledCyclesButton.setBounds(380, 40, 80, 30);
     mNormalizeButton.setBounds(470, 40, 80, 30);
-    mResampledCycleLengthComboBox.setBounds(700, 40, 80, 30);
+    mResampledCycleLengthComboBox.setBounds(680, 40, 100, 30);
     
     mResampledLengthLabel.setBounds(200, 80, getWidth() - 20, 20);
     mEventConfirmationLabel.setBounds(10, 10, 300, 20);
     mInstructionsLabel.setBounds(10, 40, getWidth(), getHeight());
+    
+    mPlayResampledButton.setBounds(570, 70, 100, 30);
+    mPlayResynthesizedButton.setBounds(680, 70, 100, 30);
 }
 
 void MainComponent::sliderValueChanged(juce::Slider* slider)
@@ -246,6 +265,24 @@ void MainComponent::buttonClicked(juce::Button* button){
         mVectorThatShowsWhichSamplesAreCommitted.assign(mVectorThatShowsWhichSamplesAreCommitted.size(), false);
     } else if (button == &mNormalizeButton){
         normalizeBuffer(mAudioFileBuffer);
+    } else if (button == &mPlayResampledButton){
+        if(mPlaybackState == PlaybackStates::Stopped || mPlaybackState == PlaybackStates::PlayingResynthesized){
+            mPlayResampledButton.setToggleState(true, juce::dontSendNotification);
+            mPlayResynthesizedButton.setToggleState(false, juce::dontSendNotification);
+            mPlaybackState = PlaybackStates::PlayingResampled;
+        } else {
+            mPlayResampledButton.setToggleState(false, juce::dontSendNotification);
+            mPlaybackState = PlaybackStates::Stopped;
+        }
+    } else if (button == &mPlayResynthesizedButton){
+        if(mPlaybackState == PlaybackStates::Stopped || mPlaybackState == PlaybackStates::PlayingResampled){
+            mPlayResynthesizedButton.setToggleState(true, juce::dontSendNotification);
+            mPlayResampledButton.setToggleState(false, juce::dontSendNotification);
+            mPlaybackState = PlaybackStates::PlayingResynthesized;
+        } else {
+            mPlayResynthesizedButton.setToggleState(false, juce::dontSendNotification);
+            mPlaybackState = PlaybackStates::Stopped;
+        }
     }
 }
 
@@ -276,11 +313,11 @@ bool MainComponent::keyPressed(const juce::KeyPress& key, Component* originating
         int newVal = mStartSampleIndexSlider.getValue() + 2;
         mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
         return true;
-    } else if (key.getTextCharacter() == 'U' || key.getTextCharacter() == 'u'){
+    } else if (key.getTextCharacter() == 'I' || key.getTextCharacter() == 'i'){
         int newVal = mCycleLenHintSlider.getValue() - 4;
         mCycleLenHintSlider.setValue(newVal, juce::sendNotificationSync);
         return true;
-    } else if (key.getTextCharacter() == 'I' || key.getTextCharacter() == 'i'){
+    } else if (key.getTextCharacter() == 'U' || key.getTextCharacter() == 'u'){
         int newVal = mCycleLenHintSlider.getValue() + 4;
         mCycleLenHintSlider.setValue(newVal, juce::sendNotificationSync);
         return true;
@@ -293,19 +330,38 @@ void MainComponent::handleCommitButton(){
 
     int originalLengthOfCycle = mClosestZeroCrossingEnd - mClosestZeroCrossingStart;
 
+    // set to true all indexed from the original file that are going to be used
     for(int i = mClosestZeroCrossingStart; i < mClosestZeroCrossingEnd; ++i){
         mVectorThatShowsWhichSamplesAreCommitted[i] = true;
     }
 
+    // make a temp origCycle and copy the sampled from orig file
     std::vector<float> origCycle(originalLengthOfCycle, 0.0f);
     for(int i = 0; i < originalLengthOfCycle; ++i){
         origCycle[i] = mAudioBufferData[i + mClosestZeroCrossingStart];
     }
+    
+    /* WIP start ---------------
 
-    // store the resampled cycle in a new vector and then insert it at the end of mResampledCycles
-//    std::vector<float> resampled(mResampledCycleLength, 0.0f);
-    
-    
+    std::vector<float> origCycle(1024, 0.0f);
+    juce::File audioFile = juce::File("/Users/mihaitraista/4.Projects/Coding/JUCE/BLResampler/Resources/cello-res-dephased.wav");
+
+    juce::AudioBuffer<float> tempBuff;
+    pFileHandler->storeAudioFileInBuffer(audioFile, tempBuff);
+
+    const float * tempBuffData = tempBuff.getReadPointer(0);
+    std::cout << "duration = " << tempBuff.getNumSamples() << std::endl;
+
+    for(int i = 0; i < 1024; ++i){
+        origCycle[i] = tempBuffData[i];
+    }
+
+    mClosestZeroCrossingStart = 0;
+    mClosestZeroCrossingEnd = 1023;
+
+    WIP end --------------- */
+
+    // create the three temp vectors
     std::vector<float> resampled = std::vector<float>(WTSIZE, 0.0f);
     std::vector<float> polarValues = std::vector<float>(WTSIZE * 2, 0.0f);
     std::vector<float> resynthesized = std::vector<float>(WTSIZE, 0.0f);
@@ -320,6 +376,7 @@ void MainComponent::handleCommitButton(){
     
 //    Fourier::rotateWavetableToNearestZero(resynthesized);
 
+    // append the temp vectors to the member vectors
     mResampledCycles.insert(mResampledCycles.end(), resampled.begin(), resampled.end());
     mPolarCycles.insert(mPolarCycles.end(), polarValues.begin(), polarValues.end());
     mResynthesizedCycles.insert(mResynthesizedCycles.end(), resynthesized.begin(), resynthesized.end());
