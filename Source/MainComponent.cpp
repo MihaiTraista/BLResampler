@@ -234,8 +234,10 @@ void MainComponent::buttonClicked(juce::Button* button){
     if (button == &mCommitButton){
         handleCommitButton();
     } else if (button == &mSaveResampledFileButton){
-        pFileHandler->saveResampledFileOnDisk(mResampledCycles);
-        
+        pFileHandler->saveVectorAsAudioFileToDesktop(mResampledCycles, "resampled");
+        pFileHandler->saveVectorAsAudioFileToDesktop(mPolarCycles, "polar");
+        pFileHandler->saveVectorAsAudioFileToDesktop(mResynthesizedCycles, "resynthesized");
+
         mEventConfirmationLabel.setText("File Saved!", juce::dontSendNotification);
         mEventConfirmationLabel.setVisible(true);
     } else if (button == &mClearResampledCyclesButton){
@@ -304,21 +306,23 @@ void MainComponent::handleCommitButton(){
 //    std::vector<float> resampled(mResampledCycleLength, 0.0f);
     
     
-    std::vector<float> resizedWaveform = std::vector<float>(WTSIZE, 0.0f);
+    std::vector<float> resampled = std::vector<float>(WTSIZE, 0.0f);
     std::vector<float> polarValues = std::vector<float>(WTSIZE * 2, 0.0f);
     std::vector<float> resynthesized = std::vector<float>(WTSIZE, 0.0f);
 
-    pResampler->resizeCycle(origCycle, resizedWaveform);
+    pResampler->resizeCycle(origCycle, resampled);
     
-    Fourier::fillDftPolar(resizedWaveform, polarValues);
+    Fourier::fillDftPolar(resampled, polarValues);
 
     Fourier::idft(polarValues, resynthesized);
 
-    pFileHandler->saveVectorAsAudioFileToDesktop(resynthesized, "resynthesized.wav");
+//    pFileHandler->saveVectorAsAudioFileToDesktop(resynthesized, "resynthesized-single-cycle");
     
 //    Fourier::rotateWavetableToNearestZero(resynthesized);
 
-    mResampledCycles.insert(mResampledCycles.end(), resynthesized.begin(), resynthesized.end());
+    mResampledCycles.insert(mResampledCycles.end(), resampled.begin(), resampled.end());
+    mPolarCycles.insert(mPolarCycles.end(), polarValues.begin(), polarValues.end());
+    mResynthesizedCycles.insert(mResynthesizedCycles.end(), resynthesized.begin(), resynthesized.end());
 
     updateLengthInfoLabel();
 

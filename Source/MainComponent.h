@@ -56,6 +56,8 @@ private:
     std::vector<bool> mZeroCrossings;
     std::vector<bool> mVectorThatShowsWhichSamplesAreCommitted;
     std::vector<float> mResampledCycles;
+    std::vector<float> mPolarCycles;
+    std::vector<float> mResynthesizedCycles;
 
     juce::AudioBuffer<float> mAudioFileBuffer;
 
