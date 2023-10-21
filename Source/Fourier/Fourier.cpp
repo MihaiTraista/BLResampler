@@ -28,33 +28,57 @@ void Fourier::fillDftPolar(const std::vector<float>& rawWavetable, std::vector<f
     }
 }
 
-void Fourier::idft(const std::vector<float>& polarValues, std::vector<float>& resynthesized){
-    float amp, phase;
+void Fourier::idft(const std::vector<float>& polarValues,
+                   std::vector<float>& resynthesized,
+                   int harmonicLimit,
+                   float rollOffPercent,
+                   int nCycles){
+    
+    std::vector<float> tempResynthesized = std::vector<float>(polarValues.size() / 2, 0.0f);
+    resynthesized.resize(polarValues.size() / 2, 0.0f);
+    
+    float amp, phase, roll;
+    float startRolloff = harmonicLimit - harmonicLimit * (rollOffPercent / 100.0f);
+//    startRolloff = 200;
 
-    for (int i = 0; i < WTSIZE; i++) {     //  number of samples = WTSIZE
+    for(int cycleIndex = 0; cycleIndex < nCycles; cycleIndex++){
         
-        resynthesized[i] = 0;
-        
-        for (int h = 0; h < WTSIZE; h++) {   //  number of harmonics = WTSIZE
-            amp = polarValues[h * 2];
-            phase = polarValues[h * 2 + 1];
-//            phase = (static_cast<float>(i) / static_cast<float>(WTSIZE)) * TWOPI - M_PI;
-//            phase = 0.0f;
-//            amp = 1.0f;
+        for (int i = 0; i < WTSIZE; i++) {     //  number of samples = WTSIZE
+            
+            tempResynthesized[i + cycleIndex * WTSIZE] = 0.0f;
+            
+            for (int h = 0; h < WTSIZE; h++) {   //  number of harmonics = WTSIZE
+                amp = polarValues[(h + cycleIndex * WTSIZE) * 2];
+                phase = polarValues[(h + cycleIndex * WTSIZE) * 2 + 1];
+                
+//                phase = -M_PI;
 
-            // from the frequency-domain representation, we can construct the time-domain signal in two ways.
+                // roll off harmonics from startRolloff to harmonicLimit and zero out all higher harmonics
+                if (h < startRolloff){
+                    amp *= 1.0;
+                } else if (h >= startRolloff && h < harmonicLimit){
+                    roll = 1 - ((float)h - startRolloff) / (harmonicLimit - startRolloff);
+                    roll *= roll; // square roll for exponential roll off
+                    amp *= roll;
+                } else {
+                    amp *= 0.0;
+                }
 
-            // 1. reconstruct from the real and imaginary values
-            // this is applying the inverse Discrete Fourier Transform (iDFT) formula directly.
-            // real corresponds to the magnitude of the cosine component of the signal, and imag corresponds to the magnitude of the sine component.
-            // float val = real * cos(TWO_PI * i * h / WTSIZE) - imag * sin(TWO_PI * i * h / WTSIZE);
+                float val = amp * cos(TWOPI * (i + cycleIndex * WTSIZE) * h / WTSIZE + phase);
 
-            // 2. reconstruct from the polar coordinates instead of rectangular coordinates.
-            float val = amp * cos(TWOPI * i * h / WTSIZE + phase);
-
-            resynthesized[i] += val;
+                tempResynthesized[i + cycleIndex * WTSIZE] += val;
+            }
         }
     }
+    
+    applyLinearSlant(tempResynthesized, nCycles);
+//    float f1 = tempResynthesized[0];
+//    float f2 = tempResynthesized[1];
+//    float l1 = tempResynthesized[1022];
+//    float l2 = tempResynthesized[1023];
+//    l2 = 0.0f;
+
+    resynthesized = tempResynthesized;
 }
 
 void Fourier::removeDCOffset(int bandIndex, std::vector<std::vector<float>>& blw){
@@ -88,4 +112,17 @@ void Fourier::rotateWavetableToNearestZero(std::vector<float>& wt){
     }
 
     wt = rotatedWt;
+}
+
+void Fourier::applyLinearSlant(std::vector<float>& waveform, int nCycles) {
+    for(int cycleIndex = 0; cycleIndex < nCycles; cycleIndex++){
+        float startValue = waveform[cycleIndex * WTSIZE];
+        float endValue = waveform[(cycleIndex + 1) * WTSIZE - 1];
+        float delta = endValue - startValue;
+
+        for (int i = 0; i < WTSIZE; ++i) {
+            float ramp = i / static_cast<float>(WTSIZE - 1);
+            waveform[cycleIndex * WTSIZE + i] -= (startValue + delta * ramp);
+        }
+    }
 }

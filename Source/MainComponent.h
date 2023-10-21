@@ -53,7 +53,6 @@ private:
     void updateLengthInfoLabel();
     void handleCommitButton();
     void updateBufferAndRecalculateZeroCrossings(juce::File& audioFile);
-    void normalizeBuffer(std::vector<float>& buffer);
 
     int mStartSampleIndex = 0;
     int mCycleLenHint = 600;
@@ -76,7 +75,6 @@ private:
     juce::TextButton mCommitButton;
     juce::TextButton mSaveResampledFileButton;
     juce::TextButton mClearResampledCyclesButton;
-    juce::TextButton mNormalizeButton;
     juce::Label mResampledLengthLabel;
     juce::Label mEventConfirmationLabel;
     juce::Label mInstructionsLabel;
@@ -84,10 +82,12 @@ private:
     juce::Label mResampledCycleLengthComboBoxLabel;
     juce::TextButton mPlayResampledButton;
     juce::TextButton mPlayResynthesizedButton;
+    juce::TextButton mPlayModifiedResynthesisButton;
+    
 
     WaveformDisplay mWaveformDisplay;
     WaveformDisplay mOriginalWaveform;
-    WaveformDisplay mResampledWaveform;
+    WaveformDisplay mResynthesizedWaveform;
     
     std::unique_ptr<FileHandler> pFileHandler = std::make_unique<FileHandler>();
     std::unique_ptr<Resampler> pResampler = std::make_unique<Resampler>();

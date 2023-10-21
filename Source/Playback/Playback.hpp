@@ -4,19 +4,16 @@
 #include <vector>
 
 #include "../Globals/Globals.hpp"
+#include "../Fourier/Fourier.hpp"
 
 class Playback{
 public:
-    Playback(std::vector<float>& resampledCycles,
-             std::vector<float>& polarCycles,
-             std::vector<float>& resynthesizedCycles);
+    Playback();
     
-    void audioCallback(const juce::AudioSourceChannelInfo& bufferToFill, std::vector<float>& vectorToReadFrom);
+    void readSamplesFromVector(const juce::AudioSourceChannelInfo& bufferToFill, const std::vector<float>& vectorToReadFrom);
+    void playLiveResynthesis(const juce::AudioSourceChannelInfo& bufferToFill, const std::vector<float>& polar);
     
 private:
     int mSampleCounter = 0;
-    
-    std::vector<float>& mResampledCycles;
-    std::vector<float>& mPolarCycles;
-    std::vector<float>& mResynthesizedCycles;
+    std::vector<float> mLiveResynthesized = std::vector<float>(WTSIZE, 0.0f);
 };

@@ -10,8 +10,8 @@ MainComponent::MainComponent():
                      &mClosestZeroCrossingStart,
                      &mClosestZeroCrossingEnd),
     mOriginalWaveform(mOrigAudioData),
-    mResampledWaveform(mResampledCycles),
-    pPlayback(std::make_unique<Playback>(mResampledCycles, mPolarCycles, mResynthesizedCycles))
+    mResynthesizedWaveform(mResynthesizedCycles),
+    pPlayback(std::make_unique<Playback>())
 {
     setSize (800, 600);
 
@@ -22,11 +22,16 @@ MainComponent::MainComponent():
     
     addAndMakeVisible(mWaveformDisplay);
     addAndMakeVisible(mOriginalWaveform);
+    addAndMakeVisible(mResynthesizedWaveform);
+    mResynthesizedWaveform.setEnabled(false);
+    mResynthesizedWaveform.setVisible(false);
 
     // read audio file and display waveform
     // /Users/mihaitraista/5.Sound Libraries/fl1.wav
     // /Users/mihaitraista/4.Projects/Coding/JUCE/CycleChopper/Resources/Cello_C2_1.wav
-    juce::File audioFile = juce::File("/Users/mihaitraista/4.Projects/Coding/JUCE/CycleChopper/Resources/Cello_C2_1.wav");
+    // /Users/mihaitraista/4.Projects/Coding/JUCE/WebTenori/Resources/ForResampling/Flute-Long.wav
+    // /Users/mihaitraista/4.Projects/Coding/JUCE/CycleChopper/Resources/Cello_C2_1.wav
+    juce::File audioFile = juce::File("/Users/mihaitraista/4.Projects/Coding/JUCE/WebTenori/Resources/ForResampling/Flute-Long.wav");
 
     updateBufferAndRecalculateZeroCrossings(audioFile);
     
@@ -62,13 +67,13 @@ void MainComponent::addSlidersButtonsAndLabels(){
         mStartSampleIndexSlider.setRange(0, 1, 1);
         mStartSampleIndexSlider.setValue(0);
     }
-
+    
     mStartSampleIndexSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     mStartSampleIndexSlider.setColour(juce::Slider::trackColourId, juce::Colour::fromRGBA(255, 255, 255, 50));
     mStartSampleIndexSlider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
     mStartSampleIndexSlider.addListener(this);
     addAndMakeVisible(&mStartSampleIndexSlider);
-
+    
     // Cycle Len Hint Slider and Label
     addAndMakeVisible(&mCycleLenHintSlider);
     mCycleLenHintSlider.setSliderStyle(juce::Slider::LinearBar);
@@ -97,11 +102,6 @@ void MainComponent::addSlidersButtonsAndLabels(){
     mClearResampledCyclesButton.addListener(this);
     addAndMakeVisible(mClearResampledCyclesButton);
     
-    // Normalize Button
-    mNormalizeButton.setButtonText("Normalize");
-    mNormalizeButton.addListener(this);
-    addAndMakeVisible(mNormalizeButton);
-
     // Show Resampled Length Label
     mResampledLengthLabel.setText("Resampled Buffer Length: 0 samples, 0 cycles", juce::dontSendNotification);
     mResampledLengthLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
@@ -152,7 +152,7 @@ void MainComponent::addSlidersButtonsAndLabels(){
     mPlayResampledButton.setButtonText("Play Resampled");
     mPlayResampledButton.addListener(this);
     addAndMakeVisible(mPlayResampledButton);
-
+    
     // Play Resynthesized Button
     mPlayResynthesizedButton.setButtonText("Play Resynthesized");
     mPlayResynthesizedButton.addListener(this);
@@ -166,9 +166,9 @@ void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRat
 void MainComponent::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill)
 {
     if(mPlaybackState == PlaybackStates::PlayingResampled)
-        pPlayback->audioCallback(bufferToFill, mResampledCycles);
+        pPlayback->readSamplesFromVector(bufferToFill, mResampledCycles);
     else if (mPlaybackState == PlaybackStates::PlayingResynthesized)
-        pPlayback->audioCallback(bufferToFill, mResynthesizedCycles);
+        pPlayback->readSamplesFromVector(bufferToFill, mResynthesizedCycles);
     else
         bufferToFill.clearActiveBufferRegion();
 }
@@ -196,15 +196,16 @@ void MainComponent::resized()
     mCommitButton.setBounds(200, 40, 80, 30);
     mSaveResampledFileButton.setBounds(290, 40, 80, 30);
     mClearResampledCyclesButton.setBounds(380, 40, 80, 30);
-    mNormalizeButton.setBounds(470, 40, 80, 30);
     mResampledCycleLengthComboBox.setBounds(680, 40, 100, 30);
     
     mResampledLengthLabel.setBounds(200, 80, getWidth() - 20, 20);
     mEventConfirmationLabel.setBounds(10, 10, 300, 20);
     mInstructionsLabel.setBounds(10, 40, getWidth(), getHeight());
     
-    mPlayResampledButton.setBounds(570, 70, 100, 30);
-    mPlayResynthesizedButton.setBounds(680, 70, 100, 30);
+    mPlayResampledButton.setBounds(460, 70, 100, 30);
+    mPlayResynthesizedButton.setBounds(570, 70, 100, 30);
+
+    mResynthesizedWaveform.setBounds(0, 200, getWidth(), getHeight() - 200);
 }
 
 void MainComponent::sliderValueChanged(juce::Slider* slider)
@@ -264,8 +265,6 @@ void MainComponent::buttonClicked(juce::Button* button){
         mResampledCycles.clear();
         updateLengthInfoLabel();
         mVectorThatShowsWhichSamplesAreCommitted.assign(mVectorThatShowsWhichSamplesAreCommitted.size(), false);
-    } else if (button == &mNormalizeButton){
-        normalizeBuffer(mOrigAudioData);
     } else if (button == &mPlayResampledButton){
         if(mPlaybackState == PlaybackStates::Stopped || mPlaybackState == PlaybackStates::PlayingResynthesized){
             mPlayResampledButton.setToggleState(true, juce::dontSendNotification);
@@ -277,12 +276,24 @@ void MainComponent::buttonClicked(juce::Button* button){
         }
     } else if (button == &mPlayResynthesizedButton){
         if(mPlaybackState == PlaybackStates::Stopped || mPlaybackState == PlaybackStates::PlayingResampled){
+
+            int nCycles = static_cast<int>(mResampledCycles.size()) / static_cast<int>(WTSIZE);
+
+            // harmonicsLimit = 512 = Niquist / freq = 22050 / 43 Hz (1024 samples is 43 Hz)
+            int harmonicsLimit = 512;
+            Fourier::idft(mPolarCycles, mResynthesizedCycles, harmonicsLimit, 50.0f, nCycles);
+            
             mPlayResynthesizedButton.setToggleState(true, juce::dontSendNotification);
             mPlayResampledButton.setToggleState(false, juce::dontSendNotification);
             mPlaybackState = PlaybackStates::PlayingResynthesized;
+            
+            mResynthesizedWaveform.setEnabled(true);
+            mResynthesizedWaveform.setVisible(true);
         } else {
             mPlayResynthesizedButton.setToggleState(false, juce::dontSendNotification);
             mPlaybackState = PlaybackStates::Stopped;
+            mResynthesizedWaveform.setEnabled(false);
+            mResynthesizedWaveform.setVisible(false);
         }
     }
 }
@@ -371,7 +382,7 @@ void MainComponent::handleCommitButton(){
     
     Fourier::fillDftPolar(resampled, polarValues);
 
-    Fourier::idft(polarValues, resynthesized);
+//    Fourier::idft(polarValues, resynthesized, WTSIZE, 50.0f, 1);
 
 //    pFileHandler->saveVectorAsAudioFileToDesktop(resynthesized, "resynthesized-single-cycle");
     
@@ -420,23 +431,4 @@ void MainComponent::updateBufferAndRecalculateZeroCrossings(juce::File& audioFil
 
     mStartSampleIndexSlider.setRange(0, mOrigAudioData.size() - mCycleLenHint * 2);
     mStartSampleIndexSlider.setValue(mOrigAudioData.size() / 2, juce::sendNotification);
-}
-
-void MainComponent::normalizeBuffer(std::vector<float>& buffer){
-    float* data = buffer.data();
-    float maxVal = 0.0f;
-    
-    for(int i = 0; i < buffer.size(); ++i){
-        if(fabs(data[i] > maxVal))
-            maxVal = fabs(data[i]);
-    }
-    
-    float scaler = 1.0f / maxVal;
-    scaler *= 0.95; //  leave a bit of headroom
-    
-    for(int i = 0; i < buffer.size(); ++i){
-        data[i] = data[i] * scaler;
-    }
-    
-    repaint();
 }

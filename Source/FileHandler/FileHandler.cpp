@@ -39,7 +39,10 @@ void FileHandler::readAudioFileAndCopyToVector(juce::File& audioFile, std::vecto
         
         // Copy the data from the temporary AudioBuffer to the vector
         auto* channelData = tempAudioBuffer.getReadPointer(0);
+        
         std::copy(channelData, channelData + audioVector.size(), audioVector.begin());
+
+        normalizeAudioVector(audioVector);
         
         std::cout << "Done storing audio file in vector!" << std::endl;
         
@@ -86,5 +89,22 @@ void FileHandler::saveVectorAsAudioFileToDesktop(const std::vector<float>& audio
             // Write buffer to audio file
             audioWriter->writeFromAudioSampleBuffer(buffer, 0, audioData.size());
         }
+    }
+}
+
+void FileHandler::normalizeAudioVector(std::vector<float>& audioVector){
+    float* data = audioVector.data();
+    float maxVal = 0.0f;
+    
+    for(int i = 0; i < audioVector.size(); ++i){
+        if(fabs(data[i] > maxVal))
+            maxVal = fabs(data[i]);
+    }
+
+    float scaler = 1.0f / maxVal;
+    scaler *= 0.95; //  leave a bit of headroom
+    
+    for(int i = 0; i < audioVector.size(); ++i){
+        data[i] = data[i] * scaler;
     }
 }
