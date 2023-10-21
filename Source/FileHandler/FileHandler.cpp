@@ -48,8 +48,12 @@ void FileHandler::saveVectorAsAudioFileToDesktop(const std::vector<float>& audio
     // Get the user's desktop directory
     juce::File desktop = juce::File::getSpecialLocation(juce::File::userDesktopDirectory);
 
-    // Create a File object for the output audio file
-    juce::File audioFile = desktop.getChildFile(fileName + juce::String(".wav"));
+    juce::Time currentTime = juce::Time::getCurrentTime();
+    juce::String timeString = currentTime.toString(true, true, true, true); // date, time, include seconds, use 24-hour clock
+    timeString = timeString.replaceCharacters(": ", "--");
+
+    // Create the complete filename
+    juce::File audioFile = desktop.getChildFile(fileName + "--" + timeString + ".wav");
 
     // Create a FileOutputStream for the audioFile
     std::unique_ptr<juce::FileOutputStream> fileStream(audioFile.createOutputStream());
