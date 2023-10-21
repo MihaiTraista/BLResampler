@@ -18,7 +18,7 @@ FileHandler::FileHandler(){
 
 FileHandler::~FileHandler(){}
 
-void FileHandler::storeAudioFileInBuffer(juce::File& audioFile, juce::AudioBuffer<float>& mAudioFileBuffer){
+void FileHandler::readAudioFileAndCopyToVector(juce::File& audioFile, std::vector<float>& audioVector){
     std::cout << "Storing audio file in buffer..." << std::endl;
     
     auto* reader = mFormatManager.createReaderFor(audioFile);
@@ -30,10 +30,18 @@ void FileHandler::storeAudioFileInBuffer(juce::File& audioFile, juce::AudioBuffe
         auto newSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
         mReaderSource.reset(newSource.release());
         
-        mAudioFileBuffer.setSize(reader->numChannels, static_cast<int>(reader->lengthInSamples));
+        audioVector.resize(static_cast<int>(reader->lengthInSamples));
         
-        reader->read(&mAudioFileBuffer, 0, static_cast<int>(reader->lengthInSamples), 0, true, true);
-        std::cout << "Done storing audio file in buffer!" << std::endl;
+        // Create a temporary AudioBuffer that points to the vector's data
+        juce::AudioBuffer<float> tempAudioBuffer(1, static_cast<int>(reader->lengthInSamples));
+
+        reader->read(&tempAudioBuffer, 0, static_cast<int>(reader->lengthInSamples), 0, true, true);
+        
+        // Copy the data from the temporary AudioBuffer to the vector
+        auto* channelData = tempAudioBuffer.getReadPointer(0);
+        std::copy(channelData, channelData + audioVector.size(), audioVector.begin());
+        
+        std::cout << "Done storing audio file in vector!" << std::endl;
         
         if (mReaderSource.get() == nullptr){
             std::cout << "no readerSource" << std::endl;

@@ -20,7 +20,7 @@ public:
     ZeroCrossingFinder();
     ~ZeroCrossingFinder();
 
-    void calculateZeroCrossings(const juce::AudioBuffer<float>& mAudioFileBuffer,
+    void calculateZeroCrossings(const std::vector<float>& origAudioData,
                                 std::vector<bool>& mZeroCrossings);
     void findClosestZeroCrossingsToCycleLenHint(const std::vector<bool>& mZeroCrossings,
                                                 int& mClosestZeroCrossingStart,

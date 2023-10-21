@@ -2,14 +2,15 @@
 
 //==============================================================================
 MainComponent::MainComponent():
-    mWaveformDisplay(&mAudioFileBuffer,
+    mWaveformDisplay(mOrigAudioData,
                      &mZeroCrossings,
                      &mVectorThatShowsWhichSamplesAreCommitted,
                      &mStartSampleIndex,
                      &mCycleLenHint,
                      &mClosestZeroCrossingStart,
                      &mClosestZeroCrossingEnd),
-    mOriginalWaveform(&mAudioFileBuffer),
+    mOriginalWaveform(mOrigAudioData),
+    mResampledWaveform(mResampledCycles),
     pPlayback(std::make_unique<Playback>(mResampledCycles, mPolarCycles, mResynthesizedCycles))
 {
     setSize (800, 600);
@@ -54,9 +55,9 @@ void MainComponent::addSlidersButtonsAndLabels(){
     // Start Sample Index Slider and Label
     mStartSampleIndexSlider.setSliderStyle(juce::Slider::LinearBar);
     // the audio file is already loaded, so we can set the range to the length of the file
-    if(mAudioFileBuffer.getNumSamples() > 0){
-        mStartSampleIndexSlider.setRange(0, mAudioFileBuffer.getNumSamples() - mCycleLenHint * 2);
-        mStartSampleIndexSlider.setValue(mAudioFileBuffer.getNumSamples() / 2, juce::sendNotification);
+    if(mOrigAudioData.size() > 0){
+        mStartSampleIndexSlider.setRange(0, mOrigAudioData.size() - mCycleLenHint * 2);
+        mStartSampleIndexSlider.setValue(mOrigAudioData.size() / 2, juce::sendNotification);
     } else {
         mStartSampleIndexSlider.setRange(0, 1, 1);
         mStartSampleIndexSlider.setValue(0);
@@ -223,7 +224,7 @@ void MainComponent::sliderValueChanged(juce::Slider* slider)
         int diff = newHint - mCycleLenHint;
         int halfDiff = diff / 2.0f;
         
-        mStartSampleIndexSlider.setRange(0, mAudioFileBuffer.getNumSamples() - newHint * 2);
+        mStartSampleIndexSlider.setRange(0, mOrigAudioData.size() - newHint * 2);
         mStartSampleIndexSlider.setValue(mStartSampleIndexSlider.getValue() - halfDiff, juce::sendNotification);
 
         // update mCycleLenHint and find new zeroCrossings start and end points
@@ -264,7 +265,7 @@ void MainComponent::buttonClicked(juce::Button* button){
         updateLengthInfoLabel();
         mVectorThatShowsWhichSamplesAreCommitted.assign(mVectorThatShowsWhichSamplesAreCommitted.size(), false);
     } else if (button == &mNormalizeButton){
-        normalizeBuffer(mAudioFileBuffer);
+        normalizeBuffer(mOrigAudioData);
     } else if (button == &mPlayResampledButton){
         if(mPlaybackState == PlaybackStates::Stopped || mPlaybackState == PlaybackStates::PlayingResynthesized){
             mPlayResampledButton.setToggleState(true, juce::dontSendNotification);
@@ -301,8 +302,8 @@ bool MainComponent::keyPressed(const juce::KeyPress& key, Component* originating
     } else if (key.getTextCharacter() == 'L' || key.getTextCharacter() == 'l'){
         int cycleLen = mClosestZeroCrossingEnd - mClosestZeroCrossingStart;
         int newVal = mStartSampleIndexSlider.getValue() + cycleLen;
-        if(newVal > mAudioFileBuffer.getNumSamples() - cycleLen)
-            newVal = mAudioFileBuffer.getNumSamples() - cycleLen;
+        if(newVal > mOrigAudioData.size() - cycleLen)
+            newVal = mOrigAudioData.size() - cycleLen;
         mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
         return true;
     } else if (key.getTextCharacter() == 'J' || key.getTextCharacter() == 'j'){
@@ -326,7 +327,7 @@ bool MainComponent::keyPressed(const juce::KeyPress& key, Component* originating
 }
 
 void MainComponent::handleCommitButton(){
-    const float* mAudioBufferData = mAudioFileBuffer.getReadPointer(0);
+    const float* mAudioBufferData = mOrigAudioData.data();
 
     int originalLengthOfCycle = mClosestZeroCrossingEnd - mClosestZeroCrossingStart;
 
@@ -405,11 +406,11 @@ void MainComponent::filesDropped (const juce::StringArray& files, int x, int y)
 }
 
 void MainComponent::updateBufferAndRecalculateZeroCrossings(juce::File& audioFile){
-    pFileHandler->storeAudioFileInBuffer(audioFile, mAudioFileBuffer);
+    pFileHandler->readAudioFileAndCopyToVector(audioFile, mOrigAudioData);
     
-    mVectorThatShowsWhichSamplesAreCommitted.resize(mAudioFileBuffer.getNumSamples(), false);
+    mVectorThatShowsWhichSamplesAreCommitted.resize(mOrigAudioData.size(), false);
     
-    pZeroCrossingFinder->calculateZeroCrossings(mAudioFileBuffer, mZeroCrossings);
+    pZeroCrossingFinder->calculateZeroCrossings(mOrigAudioData, mZeroCrossings);
 
     pZeroCrossingFinder->findClosestZeroCrossingsToCycleLenHint(mZeroCrossings,
                                                                 mClosestZeroCrossingStart,
@@ -417,15 +418,15 @@ void MainComponent::updateBufferAndRecalculateZeroCrossings(juce::File& audioFil
                                                                 mStartSampleIndex,
                                                                 mCycleLenHint);
 
-    mStartSampleIndexSlider.setRange(0, mAudioFileBuffer.getNumSamples() - mCycleLenHint * 2);
-    mStartSampleIndexSlider.setValue(mAudioFileBuffer.getNumSamples() / 2, juce::sendNotification);
+    mStartSampleIndexSlider.setRange(0, mOrigAudioData.size() - mCycleLenHint * 2);
+    mStartSampleIndexSlider.setValue(mOrigAudioData.size() / 2, juce::sendNotification);
 }
 
-void MainComponent::normalizeBuffer(juce::AudioBuffer<float>& buffer){
-    float* data = buffer.getWritePointer(0);
+void MainComponent::normalizeBuffer(std::vector<float>& buffer){
+    float* data = buffer.data();
     float maxVal = 0.0f;
     
-    for(int i = 0; i < buffer.getNumSamples(); ++i){
+    for(int i = 0; i < buffer.size(); ++i){
         if(fabs(data[i] > maxVal))
             maxVal = fabs(data[i]);
     }
@@ -433,7 +434,7 @@ void MainComponent::normalizeBuffer(juce::AudioBuffer<float>& buffer){
     float scaler = 1.0f / maxVal;
     scaler *= 0.95; //  leave a bit of headroom
     
-    for(int i = 0; i < buffer.getNumSamples(); ++i){
+    for(int i = 0; i < buffer.size(); ++i){
         data[i] = data[i] * scaler;
     }
     

@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <vector>
 
 class FileHandler
 {
@@ -18,7 +19,7 @@ public:
     FileHandler();
     ~FileHandler();
 
-    void storeAudioFileInBuffer(juce::File& audioFile, juce::AudioBuffer<float>& mAudioFileBuffer);
+    void readAudioFileAndCopyToVector(juce::File& audioFile, std::vector<float>& audioVector);
     void saveVectorAsAudioFileToDesktop(const std::vector<float>& audioData, const juce::String fileName);
     
 private:    

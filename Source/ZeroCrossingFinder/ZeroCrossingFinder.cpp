@@ -14,8 +14,8 @@ ZeroCrossingFinder::ZeroCrossingFinder(){}
 
 ZeroCrossingFinder::~ZeroCrossingFinder(){}
 
-void ZeroCrossingFinder::calculateZeroCrossings(const juce::AudioBuffer<float>& mAudioFileBuffer, std::vector<bool>& mZeroCrossings){
-    int numSamples = mAudioFileBuffer.getNumSamples();
+void ZeroCrossingFinder::calculateZeroCrossings(const std::vector<float>& origAudioData, std::vector<bool>& mZeroCrossings){
+    int numSamples = origAudioData.size();
     int numOfZeroCrossings = 0;
 
     mZeroCrossings.resize(numSamples, false);
@@ -26,7 +26,7 @@ void ZeroCrossingFinder::calculateZeroCrossings(const juce::AudioBuffer<float>& 
         int zero_crossing_index = -1;
 
         // Assuming the buffer is mono for simplicity
-        const float* data = mAudioFileBuffer.getReadPointer(0);
+        const float* data = origAudioData.data();
 
         // Check if the signal crosses zero by checking if the sign changes
         // between any two consecutive samples in the looking range
@@ -44,7 +44,7 @@ void ZeroCrossingFinder::calculateZeroCrossings(const juce::AudioBuffer<float>& 
         }
     }
 
-    std::cout << "Found " << numOfZeroCrossings << " zero crossings, out of " << mAudioFileBuffer.getNumSamples() << " total samples" << std::endl;
+    std::cout << "Found " << numOfZeroCrossings << " zero crossings, out of " << origAudioData.size() << " total samples" << std::endl;
 }
 
 void ZeroCrossingFinder::findClosestZeroCrossingsToCycleLenHint(const std::vector<bool>& mZeroCrossings,

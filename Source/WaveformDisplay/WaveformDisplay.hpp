@@ -16,14 +16,14 @@
 class WaveformDisplay : public juce::Component
 {
 public:
-    WaveformDisplay(const juce::AudioBuffer<float>* audioBuffer,
+    WaveformDisplay(const std::vector<float>& audioVector,
                     std::vector<bool>* zeroCrossings,
                     std::vector<bool>* vectorThatShowsWhichSamplesAreCommitted,
                     int* startSampleIndexPointer,
                     int* cycleLenHintPointer,
                     int* closestZeroCrossingStartPointer,
                     int* closestZeroCrossingEndPointer);
-    WaveformDisplay(const juce::AudioBuffer<float>* audioBuffer);
+    WaveformDisplay(const std::vector<float>& audioVector);
     
     ~WaveformDisplay() override;
 
@@ -49,7 +49,7 @@ private:
     void drawTeardropShape(juce::Graphics& g, int x, int y, int width, int height, bool centered, bool reversed);
 
 
-    const juce::AudioBuffer<float>* pAudioBuffer = nullptr;
+    const std::vector<float>& mAudioVector;
     const std::vector<bool>* pZeroCrossings = nullptr;
     const std::vector<bool>* pVectorThatShowsWhichSamplesAreCommitted = nullptr;
 

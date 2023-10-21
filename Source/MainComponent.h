@@ -53,7 +53,7 @@ private:
     void updateLengthInfoLabel();
     void handleCommitButton();
     void updateBufferAndRecalculateZeroCrossings(juce::File& audioFile);
-    void normalizeBuffer(juce::AudioBuffer<float>& buffer);
+    void normalizeBuffer(std::vector<float>& buffer);
 
     int mStartSampleIndex = 0;
     int mCycleLenHint = 600;
@@ -63,11 +63,10 @@ private:
     std::vector<bool> mZeroCrossings;
     std::vector<bool> mVectorThatShowsWhichSamplesAreCommitted;
 
+    std::vector<float> mOrigAudioData;
     std::vector<float> mResampledCycles;
     std::vector<float> mPolarCycles;
     std::vector<float> mResynthesizedCycles;
-
-    juce::AudioBuffer<float> mAudioFileBuffer;
     
     PlaybackStates mPlaybackState = PlaybackStates::Stopped;
 
@@ -88,6 +87,7 @@ private:
 
     WaveformDisplay mWaveformDisplay;
     WaveformDisplay mOriginalWaveform;
+    WaveformDisplay mResampledWaveform;
     
     std::unique_ptr<FileHandler> pFileHandler = std::make_unique<FileHandler>();
     std::unique_ptr<Resampler> pResampler = std::make_unique<Resampler>();

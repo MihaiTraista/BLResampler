@@ -10,14 +10,14 @@
 
 #include "WaveformDisplay.hpp"
 
-WaveformDisplay::WaveformDisplay(const juce::AudioBuffer<float>* audioBuffer,
+WaveformDisplay::WaveformDisplay(const std::vector<float>& audioVector,
                                  std::vector<bool>* zeroCrossings,
                                  std::vector<bool>* vectorThatShowsWhichSamplesAreCommitted,
                                  int* startSampleIndexPointer,
                                  int* cycleLenHintPointer,
                                  int* closestZeroCrossingStartPointer,
                                  int* closestZeroCrossingEndPointer):
-    pAudioBuffer(audioBuffer),
+    mAudioVector(audioVector),
     pZeroCrossings(zeroCrossings),
     pVectorThatShowsWhichSamplesAreCommitted(vectorThatShowsWhichSamplesAreCommitted),
     pStartSampleIndex(startSampleIndexPointer),
@@ -27,8 +27,8 @@ WaveformDisplay::WaveformDisplay(const juce::AudioBuffer<float>* audioBuffer,
     mShowZeroCrossings(true)
 {}
 
-WaveformDisplay::WaveformDisplay(const juce::AudioBuffer<float>* audioBuffer):
-    pAudioBuffer(audioBuffer),
+WaveformDisplay::WaveformDisplay(const std::vector<float>& audioVector):
+    mAudioVector(audioVector),
     mShowZeroCrossings(false)
 {}
 
@@ -38,7 +38,7 @@ WaveformDisplay::~WaveformDisplay()
 
 void WaveformDisplay::paint(juce::Graphics& g)
 {
-    if (pAudioBuffer->getNumSamples() == 0)
+    if (mAudioVector.size() < 1)
         return;
     
     g.fillAll(juce::Colour::fromRGB(10, 10, 20));
@@ -52,7 +52,7 @@ void WaveformDisplay::paint(juce::Graphics& g)
     if(mShowZeroCrossings)
         numSamplesToDisplay = *pCycleLenHint * 2;
     else
-        numSamplesToDisplay = pAudioBuffer->getNumSamples();
+        numSamplesToDisplay = mAudioVector.size();
     
     // if the zoom factor is larger than 10 times the width, then we draw an envelope follower
     // by averaging the absolute sample values at that location and drawing a line that is symmetric to the center
@@ -60,7 +60,7 @@ void WaveformDisplay::paint(juce::Graphics& g)
     // we draw the actual sample values with lines that are above or below the center
     bool zoomOutThresholdExceeded = numSamplesToDisplay > width * 10;
 
-    const float* bufferToDraw = pAudioBuffer->getReadPointer(0);
+    const float* bufferToDraw = mAudioVector.data();
     
     if (zoomOutThresholdExceeded){
         drawWaveformAsEnvelopeFollower(g, width, height, numSamplesToDisplay, bufferToDraw);
