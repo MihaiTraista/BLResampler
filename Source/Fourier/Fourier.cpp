@@ -6,14 +6,14 @@
 #include "Fourier.hpp"
 
 
-void Fourier::fillDftPolar(const float* rawWavetableData, float* polarValues){
+void Fourier::fillDftPolar(const std::vector<float>& rawWavetable, std::vector<float>& polarValues){
     float realImag[WTSIZE * 2], real, imag;
 
     for(int i = 0, k = 0; k < WTSIZE; i += 2, k++){
         realImag[i] = realImag[i + 1] = 0.0f;
         for(int n = 0; n < WTSIZE; n++){
-            realImag[i] += static_cast<float>(rawWavetableData[n] * std::cos((k * n * TWOPI)/WTSIZE));
-            realImag[i + 1] -= static_cast<float>(rawWavetableData[n] * std::sin((k * n * TWOPI)/WTSIZE));
+            realImag[i] += static_cast<float>(rawWavetable[n] * std::cos((k * n * TWOPI)/WTSIZE));
+            realImag[i + 1] -= static_cast<float>(rawWavetable[n] * std::sin((k * n * TWOPI)/WTSIZE));
         }
         realImag[i] /= WTSIZE;
         realImag[i+1] /= WTSIZE;
@@ -28,7 +28,7 @@ void Fourier::fillDftPolar(const float* rawWavetableData, float* polarValues){
     }
 }
 
-void Fourier::idft(float* polarValues, std::vector<float>& resynthesized){
+void Fourier::idft(const std::vector<float>& polarValues, std::vector<float>& resynthesized){
     float amp, phase;
 
     for (int i = 0; i < WTSIZE; i++) {     //  number of samples = WTSIZE
@@ -39,7 +39,7 @@ void Fourier::idft(float* polarValues, std::vector<float>& resynthesized){
             amp = polarValues[h * 2];
             phase = polarValues[h * 2 + 1];
 //            phase = (static_cast<float>(i) / static_cast<float>(WTSIZE)) * TWOPI - M_PI;
-            phase = 0.0f;
+//            phase = 0.0f;
 //            amp = 1.0f;
 
             // from the frequency-domain representation, we can construct the time-domain signal in two ways.

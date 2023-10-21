@@ -8,6 +8,7 @@
 #include "./Resampler/Resampler.hpp"
 #include "./ZeroCrossingFinder/ZeroCrossingFinder.hpp"
 #include "./Globals/Globals.hpp"
+#include "./Fourier/Fourier.hpp"
 
 class MainComponent  :  public juce::AudioAppComponent,
                         public juce::FileDragAndDropTarget,

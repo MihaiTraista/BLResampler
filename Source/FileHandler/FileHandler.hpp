@@ -20,6 +20,7 @@ public:
 
     void saveResampledFileOnDisk(std::vector<float>& mResampledCycles);
     void storeAudioFileInBuffer(juce::File& audioFile, juce::AudioBuffer<float>& mAudioFileBuffer);
+    void saveVectorAsAudioFileToDesktop(const std::vector<float>& audioData, const juce::String fileName);
     
 private:    
     juce::AudioFormatManager mFormatManager;

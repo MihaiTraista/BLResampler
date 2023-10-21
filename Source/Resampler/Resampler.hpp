@@ -21,7 +21,7 @@ public:
     Resampler();
     ~Resampler();
     
-    void resample(const std::vector<float>& origCycle, std::vector<float>& mResampledCycles);
+    void resizeCycle(const std::vector<float>& origCycle, std::vector<float>& resizedWaveform);
     
 private:
     float cubicInterpolate(float y0,float y1, float y2,float y3, float mu);

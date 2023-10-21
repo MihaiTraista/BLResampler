@@ -303,19 +303,22 @@ void MainComponent::handleCommitButton(){
     // store the resampled cycle in a new vector and then insert it at the end of mResampledCycles
 //    std::vector<float> resampled(mResampledCycleLength, 0.0f);
     
-    pResampler->resample(origCycle, mResampledCycles);
     
-//    float polarValues[WTSIZE * 2];
-    
-//    Fourier::fillDftPolar(resampled.data(), polarValues);
+    std::vector<float> resizedWaveform = std::vector<float>(WTSIZE, 0.0f);
+    std::vector<float> polarValues = std::vector<float>(WTSIZE * 2, 0.0f);
+    std::vector<float> resynthesized = std::vector<float>(WTSIZE, 0.0f);
 
-//    std::vector<float> resynthesized(mResampledCycleLength, 0.0f);
+    pResampler->resizeCycle(origCycle, resizedWaveform);
     
-//    Fourier::idft(polarValues, resynthesized);
+    Fourier::fillDftPolar(resizedWaveform, polarValues);
 
+    Fourier::idft(polarValues, resynthesized);
+
+    pFileHandler->saveVectorAsAudioFileToDesktop(resynthesized, "resynthesized.wav");
+    
 //    Fourier::rotateWavetableToNearestZero(resynthesized);
 
-//    mResampledCycles.insert(mResampledCycles.end(), resynthesized.begin(), resynthesized.end());
+    mResampledCycles.insert(mResampledCycles.end(), resynthesized.begin(), resynthesized.end());
 
     updateLengthInfoLabel();
 

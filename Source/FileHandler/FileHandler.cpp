@@ -80,3 +80,37 @@ void FileHandler::storeAudioFileInBuffer(juce::File& audioFile, juce::AudioBuffe
         std::cout << "no reader" << std::endl;
     }
 }
+
+void FileHandler::saveVectorAsAudioFileToDesktop(const std::vector<float>& audioData, const juce::String fileName)
+{
+    // Get the user's desktop directory
+    juce::File desktop = juce::File::getSpecialLocation(juce::File::userDesktopDirectory);
+
+    // Create a File object for the output audio file
+    juce::File audioFile = desktop.getChildFile(fileName);
+
+    // Create a FileOutputStream for the audioFile
+    std::unique_ptr<juce::FileOutputStream> fileStream(audioFile.createOutputStream());
+
+    if (fileStream)
+    {
+        // Create a WavAudioFormat object
+        juce::WavAudioFormat wavFormat;
+
+        // Create an AudioFormatWriter
+        std::unique_ptr<juce::AudioFormatWriter> audioWriter;
+        audioWriter.reset(wavFormat.createWriterFor(fileStream.get(), 44100, 1, 16, {}, 0));
+
+        if (audioWriter)
+        {
+            fileStream.release(); // The writer will delete the stream for us
+            
+            // Put the vector data into an AudioBuffer
+            juce::AudioBuffer<float> buffer(1, audioData.size());
+            buffer.copyFrom(0, 0, audioData.data(), audioData.size());
+
+            // Write buffer to audio file
+            audioWriter->writeFromAudioSampleBuffer(buffer, 0, audioData.size());
+        }
+    }
+}

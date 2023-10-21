@@ -14,14 +14,12 @@ Resampler::Resampler(){}
 
 Resampler::~Resampler(){}
 
-void Resampler::resample(const std::vector<float>& origCycle, std::vector<float>& mResampledCycles){
-    std::vector<float> resampled(WTSIZE, 0.0f);
-
+void Resampler::resizeCycle(const std::vector<float>& origCycle, std::vector<float>& resizedWaveform){
     int origLength = static_cast<int>(origCycle.size());
     
     if(origLength == WTSIZE) {
-        // No resampling
-        resampled = origCycle;
+        // No resize needed
+        resizedWaveform = origCycle;
     }
     else if(origLength < WTSIZE) {
         for(int i = 0; i < WTSIZE; ++i){
@@ -36,22 +34,20 @@ void Resampler::resample(const std::vector<float>& origCycle, std::vector<float>
                     origCycle[indexInOrig + 1],
                     origCycle[indexInOrig + 2],
                     frac);
-                resampled[i] = sample;
+                resizedWaveform[i] = sample;
             } else {
                 // Linear interpolation
                 float sample = (1.0f - frac) * origCycle[indexInOrig] + frac * origCycle[(indexInOrig + 1) % origLength];
-                resampled[i] = sample;
+                resizedWaveform[i] = sample;
             }
         }
     }
     else {
         for(int i = 0; i < WTSIZE; ++i){
             int indexInOrig = i * origLength / static_cast<float>(WTSIZE);
-            resampled[i] = origCycle[indexInOrig];
+            resizedWaveform[i] = origCycle[indexInOrig];
         }
     }
-    
-    mResampledCycles.insert(mResampledCycles.end(), resampled.begin(), resampled.end());
 }
 
 float Resampler::cubicInterpolate(float y0,float y1, float y2,float y3, float mu){
