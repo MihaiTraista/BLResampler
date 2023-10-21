@@ -1,0 +1,21 @@
+#pragma once
+
+#include <algorithm>
+#include <vector>
+
+#include "../Globals/Globals.hpp"
+
+class Fourier{
+public:
+    inline Fourier() = delete; // we delete the constructor because this is a utility class
+    
+    static void fillDftPolar(const float* rawWavetableData, float* polarValues);
+
+    static void idft(float* polarValues, std::vector<float>& resynthesized);
+
+    static void removeDCOffset(int bandIndex, std::vector<std::vector<float>>& blw);
+    
+    static void rotateWavetableToNearestZero(std::vector<float>& wt);
+
+private:
+};

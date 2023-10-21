@@ -225,14 +225,14 @@ void MainComponent::comboBoxChanged(juce::ComboBox* box)
     if (box == &mResampledCycleLengthComboBox)
     {
         int newValue = box->getText().getIntValue();
-        std::cout << "new cycle len " << newValue << std::endl;
-        pResampler->setLengthOfResampledCycle(newValue);
+        std::cout << "New WTSIZE = " << newValue << std::endl;
+        WTSIZE = newValue;
     }
 }
 
 void MainComponent::buttonClicked(juce::Button* button){
     if (button == &mCommitButton){
-//        handleCommitButton();
+        handleCommitButton();
     } else if (button == &mSaveResampledFileButton){
         pFileHandler->saveResampledFileOnDisk(mResampledCycles);
         
@@ -327,7 +327,7 @@ void MainComponent::handleCommitButton(){
 
 void MainComponent::updateLengthInfoLabel(){
     int len = static_cast<int>(mResampledCycles.size());
-    juce::String labelText = "Resampled Buffer Length: " + juce::String(len) + " samples, " + juce::String(len / static_cast<float>(pResampler->getLengthOfResampledCycle())) + " cycles";
+    juce::String labelText = "Resampled Buffer Length: " + juce::String(len) + " samples, " + juce::String(len / static_cast<float>(WTSIZE)) + " cycles";
     mResampledLengthLabel.setText(labelText, juce::dontSendNotification);
 }
 

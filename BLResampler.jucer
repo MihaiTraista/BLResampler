@@ -4,6 +4,14 @@
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
   <MAINGROUP id="LyixqN" name="BLResampler">
     <GROUP id="{9E17AB2C-4885-DB41-1B2E-9EB4365D5891}" name="Source">
+      <GROUP id="{6691F895-720E-5467-DC34-6BA3B4079EB1}" name="Globals">
+        <FILE id="lUt34Z" name="Globals.cpp" compile="1" resource="0" file="Source/Globals/Globals.cpp"/>
+        <FILE id="WiTm4n" name="Globals.hpp" compile="0" resource="0" file="Source/Globals/Globals.hpp"/>
+      </GROUP>
+      <GROUP id="{D79B9C72-C92E-D69E-A830-C14945D19DA5}" name="Fourier">
+        <FILE id="u2cm9n" name="Fourier.cpp" compile="1" resource="0" file="Source/Fourier/Fourier.cpp"/>
+        <FILE id="dWIF0W" name="Fourier.hpp" compile="0" resource="0" file="Source/Fourier/Fourier.hpp"/>
+      </GROUP>
       <GROUP id="{AC44D4D1-998D-53D0-C6E1-58BA55F034C7}" name="FileHandler">
         <FILE id="OAh97u" name="FileHandler.cpp" compile="1" resource="0" file="Source/FileHandler/FileHandler.cpp"/>
         <FILE id="VdwZck" name="FileHandler.hpp" compile="0" resource="0" file="Source/FileHandler/FileHandler.hpp"/>

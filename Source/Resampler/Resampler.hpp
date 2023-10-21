@@ -10,9 +10,10 @@
 
 #pragma once
 
+#include <JuceHeader.h>
 #include <vector>
 
-#include <JuceHeader.h>
+#include "../Globals/Globals.hpp"
 
 class Resampler
 {
@@ -21,11 +22,8 @@ public:
     ~Resampler();
     
     void resample(const std::vector<float>& origCycle, std::vector<float>& mResampledCycles);
-    inline void setLengthOfResampledCycle(int newValue) { mResampledCycleLength = newValue; };
-    inline int getLengthOfResampledCycle() { return mResampledCycleLength; };
     
 private:
     float cubicInterpolate(float y0,float y1, float y2,float y3, float mu);
     bool mUseCubicInterpolation = true;
-    int mResampledCycleLength = 1024;
 };

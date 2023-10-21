@@ -15,17 +15,17 @@ Resampler::Resampler(){}
 Resampler::~Resampler(){}
 
 void Resampler::resample(const std::vector<float>& origCycle, std::vector<float>& mResampledCycles){
-    std::vector<float> resampled(mResampledCycleLength, 0.0f);
+    std::vector<float> resampled(WTSIZE, 0.0f);
 
     int origLength = static_cast<int>(origCycle.size());
     
-    if(origLength == mResampledCycleLength) {
+    if(origLength == WTSIZE) {
         // No resampling
         resampled = origCycle;
     }
-    else if(origLength < mResampledCycleLength) {
-        for(int i = 0; i < mResampledCycleLength; ++i){
-            float position = static_cast<float>(i) * origLength / mResampledCycleLength;
+    else if(origLength < WTSIZE) {
+        for(int i = 0; i < WTSIZE; ++i){
+            float position = static_cast<float>(i) * origLength / static_cast<float>(WTSIZE);
             int indexInOrig = static_cast<int>(position);
             float frac = position - indexInOrig;
 
@@ -45,8 +45,8 @@ void Resampler::resample(const std::vector<float>& origCycle, std::vector<float>
         }
     }
     else {
-        for(int i = 0; i < mResampledCycleLength; ++i){
-            int indexInOrig = i * origLength / mResampledCycleLength;
+        for(int i = 0; i < WTSIZE; ++i){
+            int indexInOrig = i * origLength / static_cast<float>(WTSIZE);
             resampled[i] = origCycle[indexInOrig];
         }
     }

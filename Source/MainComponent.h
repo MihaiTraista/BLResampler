@@ -7,7 +7,7 @@
 #include "./FileHandler/FileHandler.hpp"
 #include "./Resampler/Resampler.hpp"
 #include "./ZeroCrossingFinder/ZeroCrossingFinder.hpp"
-
+#include "./Globals/Globals.hpp"
 
 class MainComponent  :  public juce::AudioAppComponent,
                         public juce::FileDragAndDropTarget,
