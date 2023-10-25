@@ -10,7 +10,7 @@ MainComponent::MainComponent():
                      &mClosestZeroCrossingStart,
                      &mClosestZeroCrossingEnd),
     mSmallWaveform(&mOrigAudioData),
-    pPlayback(std::make_unique<Playback>())
+    pPlayback(std::make_unique<Playback>(&mResampledCycles))
 {
     setSize (800, 600);
 
@@ -209,10 +209,8 @@ void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRat
 
 void MainComponent::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill)
 {
-    if(mPlaybackState == PlaybackStates::PlayingResampled)
-        pPlayback->readSamplesFromVector(bufferToFill, mResampledCycles);
-    else if (mPlaybackState == PlaybackStates::PlayingResynthesized)
-        pPlayback->readSamplesFromVector(bufferToFill, mResynthesizedCycles);
+    if(mPlaybackState == PlaybackStates::Playing)
+        pPlayback->readSamplesFromVector(bufferToFill);
     else
         bufferToFill.clearActiveBufferRegion();
 }
@@ -307,6 +305,14 @@ void MainComponent::sliderValueChanged(juce::Slider* slider)
                                                                     mCycleLenHint);
 
         mEventConfirmationLabel.setVisible(false);
+    } else if (slider == &mBandSlider){
+        int band = mBandSlider.getValue();
+        mSelectedBand = band;
+        if(mModeResynthesizedButton.getToggleState()){
+            mLargeWaveform.setAudioVector(&mResynthesizedCycles[mSelectedBand], juce::dontSendNotification);
+            mSmallWaveform.setAudioVector(&mResynthesizedCycles[mSelectedBand], juce::dontSendNotification);
+            pPlayback->setAudioVector(&mResynthesizedCycles[mSelectedBand]);
+        }
     }
     repaint();
 }
@@ -327,22 +333,22 @@ void MainComponent::buttonClicked(juce::Button* button){
     } else if (button == &mSaveButton){
         pFileHandler->saveVectorAsAudioFileToDesktop(mResampledCycles, "resampled");
         pFileHandler->saveVectorAsAudioFileToDesktop(mPolarCycles, "polar");
-        pFileHandler->saveVectorAsAudioFileToDesktop(mResynthesizedCycles, "resynthesized");
+        pFileHandler->saveVectorAsAudioFileToDesktop(mResynthesizedCycles[mSelectedBand], "resynthesized");
 
         mEventConfirmationLabel.setText("File Saved!", juce::dontSendNotification);
         mEventConfirmationLabel.setVisible(true);
     } else if (button == &mClearButton){
         mResampledCycles.clear();
         mPolarCycles.clear();
-        mResynthesizedCycles.clear();
+        mResynthesizedCycles[mSelectedBand].clear();
         updateLengthInfoLabel();
         mVectorThatShowsWhichSamplesAreCommitted.assign(mVectorThatShowsWhichSamplesAreCommitted.size(), false);
     } else if (button == &mDeleteButton){
     } else if (button == &mPlayButton){
         bool playButtonState = mPlayButton.getToggleState();
-        
+
         if(playButtonState){
-            mPlaybackState = PlaybackStates::PlayingResynthesized;
+            mPlaybackState = PlaybackStates::Playing;
         } else {
             mPlaybackState = PlaybackStates::Stopped;
         }
@@ -352,17 +358,23 @@ void MainComponent::buttonClicked(juce::Button* button){
         mModeResynthesizedButton.setToggleState(false, juce::dontSendNotification);
         mLargeWaveform.setAudioVector(&mOrigAudioData, true);
         mSmallWaveform.setAudioVector(&mOrigAudioData, false);
+        pPlayback->setAudioVector(&mOrigAudioData);
         repaint();
     } else if(button == &mModeResampledButton){
         mModeOrigButton.setToggleState(false, juce::dontSendNotification);
         mModeResampledButton.setToggleState(true, juce::dontSendNotification);
         mModeResynthesizedButton.setToggleState(false, juce::dontSendNotification);
+        mLargeWaveform.setAudioVector(&mResampledCycles, false);
+        mSmallWaveform.setAudioVector(&mResampledCycles, false);
+        pPlayback->setAudioVector(&mResampledCycles);
+        repaint();
     } else if(button == &mModeResynthesizedButton){
         mModeOrigButton.setToggleState(false, juce::dontSendNotification);
         mModeResampledButton.setToggleState(false, juce::dontSendNotification);
         mModeResynthesizedButton.setToggleState(true, juce::dontSendNotification);
-        mLargeWaveform.setAudioVector(&mResynthesizedCycles, false);
-        mSmallWaveform.setAudioVector(&mResynthesizedCycles, false);
+        mLargeWaveform.setAudioVector(&mResynthesizedCycles[mSelectedBand], false);
+        mSmallWaveform.setAudioVector(&mResynthesizedCycles[mSelectedBand], false);
+        pPlayback->setAudioVector(&mResynthesizedCycles[mSelectedBand]);
         repaint();
     } else if(button == &mPrevCycleButton){
         int cycleLen = mClosestZeroCrossingEnd - mClosestZeroCrossingStart;
@@ -463,9 +475,14 @@ void MainComponent::handleCommitButton(){
     Fourier::fillDftPolar(resampled, polarValues);
 
     // harmonicsLimit = 512 because Niquist(22050) / freq(43) = 512 (1024 samples is 43 Hz)
-    int harmonicsLimit = 512;
 
-    Fourier::idft(polarValues, resynthesized, harmonicsLimit, 50.0f, 1);
+    for(int band = 0; band < N_WT_BANDS; band++){
+        float harmonicsLimit = 22050.0f / baseFrequencies[band];
+
+        Fourier::idft(polarValues, resynthesized, harmonicsLimit, 50.0f, 1);
+        
+        mResynthesizedCycles[band].insert(mResynthesizedCycles[band].end(), resynthesized.begin(), resynthesized.end());
+    }
 
 //    pFileHandler->saveVectorAsAudioFileToDesktop(resynthesized, "resynthesized-single-cycle");
     
@@ -473,8 +490,8 @@ void MainComponent::handleCommitButton(){
 
     // append the temp vectors to the member vectors
     mResampledCycles.insert(mResampledCycles.end(), resampled.begin(), resampled.end());
+
     mPolarCycles.insert(mPolarCycles.end(), polarValues.begin(), polarValues.end());
-    mResynthesizedCycles.insert(mResynthesizedCycles.end(), resynthesized.begin(), resynthesized.end());
 
     updateLengthInfoLabel();
 

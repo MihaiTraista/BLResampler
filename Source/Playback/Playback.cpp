@@ -1,10 +1,12 @@
 #include "Playback.hpp"
 
-Playback::Playback(){}
+Playback::Playback(const std::vector<float>* pAV):
+    pAudioVector(pAV)
+{}
 
-void Playback::readSamplesFromVector(const juce::AudioSourceChannelInfo& bufferToFill, const std::vector<float>& vectorToReadFrom)
+void Playback::readSamplesFromVector(const juce::AudioSourceChannelInfo& bufferToFill)
 {
-    if(vectorToReadFrom.size() < 1)
+    if(pAudioVector == nullptr || pAudioVector->size() < 2)
         return;
     
     int numChannels = bufferToFill.buffer->getNumChannels();
@@ -14,8 +16,8 @@ void Playback::readSamplesFromVector(const juce::AudioSourceChannelInfo& bufferT
     float* rightChannel = bufferToFill.buffer->getWritePointer(1, bufferToFill.startSample);
 
     for (int sample = 0; sample < numSamples; ++sample){
-        mSampleCounter = (++mSampleCounter) % vectorToReadFrom.size();
-        leftChannel[sample] = vectorToReadFrom[mSampleCounter];
+        mSampleCounter = (++mSampleCounter) % pAudioVector->size();
+        leftChannel[sample] = (*pAudioVector)[mSampleCounter];
     }
 
     for (int sample = 0; sample < numSamples; ++sample){

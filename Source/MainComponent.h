@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <array>
 #include <vector>
 
 #include "./WaveformDisplay/WaveformDisplay.hpp"
@@ -20,9 +21,8 @@ class MainComponent  :  public juce::AudioAppComponent,
 {
 public:
     enum class PlaybackStates{
-        Stopped,
-        PlayingResampled,
-        PlayingResynthesized
+        Playing,
+        Stopped
     };
     
     //==============================================================================
@@ -58,6 +58,7 @@ private:
     int mCycleLenHint = 600;
     int mClosestZeroCrossingStart = 0;
     int mClosestZeroCrossingEnd = 0;
+    int mSelectedBand = 0;
 
     std::vector<bool> mZeroCrossings;
     std::vector<bool> mVectorThatShowsWhichSamplesAreCommitted;
@@ -65,7 +66,7 @@ private:
     std::vector<float> mOrigAudioData;
     std::vector<float> mResampledCycles;
     std::vector<float> mPolarCycles;
-    std::vector<float> mResynthesizedCycles;
+    std::array<std::vector<float>, N_WT_BANDS> mResynthesizedCycles;
     
     PlaybackStates mPlaybackState = PlaybackStates::Stopped;
 
@@ -85,7 +86,7 @@ private:
     juce::Label mInstructionsLabel;
     juce::ComboBox mCycleLengthComboBox;
     juce::Label mCycleLengthComboBoxLabel;
-    
+
     juce::TextButton mPlayButton;
 
     juce::TextButton mModeOrigButton;
