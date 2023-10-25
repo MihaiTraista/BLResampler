@@ -199,7 +199,7 @@ void MainComponent::resized()
     mResampledCycleLengthComboBox.setBounds(680, 40, 100, 30);
     
     mResampledLengthLabel.setBounds(200, 80, getWidth() - 20, 20);
-    mEventConfirmationLabel.setBounds(10, 10, 300, 20);
+    mEventConfirmationLabel.setBounds(10, 10, 190, 20);
     mInstructionsLabel.setBounds(10, 40, getWidth(), getHeight());
     
     mPlayResampledButton.setBounds(460, 70, 100, 30);
@@ -263,6 +263,8 @@ void MainComponent::buttonClicked(juce::Button* button){
         mEventConfirmationLabel.setVisible(true);
     } else if (button == &mClearResampledCyclesButton){
         mResampledCycles.clear();
+        mPolarCycles.clear();
+        mResynthesizedCycles.clear();
         updateLengthInfoLabel();
         mVectorThatShowsWhichSamplesAreCommitted.assign(mVectorThatShowsWhichSamplesAreCommitted.size(), false);
     } else if (button == &mPlayResampledButton){
