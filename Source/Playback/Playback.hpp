@@ -8,14 +8,22 @@
 
 class Playback{
 public:
-    Playback(const std::vector<float>* pAV);
+    Playback(const std::vector<float>* pAV, int start, int length);
     
     void readSamplesFromVector(const juce::AudioSourceChannelInfo& bufferToFill);
-    inline void setAudioVector(const std::vector<float>* pAV){
+    inline void setAudioVector(const std::vector<float>* pAV, int start, int length){
         pAudioVector = pAV;
+        mReadingStart = start;
+        mReadingLength = length;
+        mSampleCounter = 0;
     };
-    
+
+    inline void setReadingStart(int val){ mReadingStart = val; };
+    inline void setReadingLength(int val){ mReadingLength = val; };
+
 private:
     int mSampleCounter = 0;
     const std::vector<float>* pAudioVector = nullptr;
+    int mReadingStart = 0;
+    int mReadingLength = 0;
 };

@@ -10,7 +10,7 @@ MainComponent::MainComponent():
                      &mClosestZeroCrossingStart,
                      &mClosestZeroCrossingEnd),
     mSmallWaveform(&mOrigAudioData, 0, 0),
-    pPlayback(std::make_unique<Playback>(&mResampledCycles))
+    pPlayback(std::make_unique<Playback>(&mOrigAudioData, 0, 0))
 {
     setSize (800, 600);
 
@@ -79,6 +79,7 @@ void MainComponent::addSlidersButtonsAndLabels(){
     addAndMakeVisible(&mCycleLenHintSlider);
 
     mCycleLenHintSliderLabel.setText("Zoom", juce::dontSendNotification);
+    mCycleLenHintSliderLabel.setInterceptsMouseClicks(false, false);
     mCycleLenHintSliderLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
     addAndMakeVisible(&mCycleLenHintSliderLabel);
 
@@ -90,9 +91,13 @@ void MainComponent::addSlidersButtonsAndLabels(){
     addAndMakeVisible(&mBandSlider);
 
     mBandSliderLabel.setText("Band", juce::dontSendNotification);
+    mBandSliderLabel.setInterceptsMouseClicks(false, false);
     mBandSliderLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
     addAndMakeVisible(&mBandSliderLabel);
     
+    mBandSlider.setVisible(false);
+    mBandSliderLabel.setVisible(false);
+
     // Zoom Cycles
     mResampledZoomSlider.setSliderStyle(juce::Slider::TwoValueHorizontal);
     mResampledZoomSlider.setRange(0, 1, 1);
@@ -102,7 +107,8 @@ void MainComponent::addSlidersButtonsAndLabels(){
     mResampledZoomSlider.addListener(this);
     addAndMakeVisible(&mResampledZoomSlider);
 
-    mResampledZoomSliderLabel.setText("Zoom Cycles", juce::dontSendNotification);
+    mResampledZoomSliderLabel.setText("Zoom", juce::dontSendNotification);
+    mResampledZoomSliderLabel.setInterceptsMouseClicks(false, false);
     mResampledZoomSliderLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
     addAndMakeVisible(&mResampledZoomSliderLabel);
     
@@ -338,7 +344,9 @@ void MainComponent::sliderValueChanged(juce::Slider* slider)
                                           0,
                                           static_cast<int>(mResynthesizedCycles[mSelectedBand].size()),
                                           false);
-            pPlayback->setAudioVector(&mResynthesizedCycles[mSelectedBand]);
+            pPlayback->setAudioVector(&mResynthesizedCycles[mSelectedBand],
+                                      mResampledZoomSlider.getMinValue() * WTSIZE,
+                                      (mResampledZoomSlider.getMaxValue() - mResampledZoomSlider.getMinValue()) * WTSIZE);
         }
     } else if (slider == &mResampledZoomSlider){
         // we don't want to change the display length in ModeOriginal
@@ -351,6 +359,9 @@ void MainComponent::sliderValueChanged(juce::Slider* slider)
 
         mLargeWaveform.setDisplayStartSample(minVal * WTSIZE);
         mLargeWaveform.setDisplayLengthInSamples(differenceVal * WTSIZE);
+        
+        pPlayback->setReadingStart(minVal * WTSIZE);
+        pPlayback->setReadingLength(differenceVal * WTSIZE);
     }
     repaint();
 }
@@ -402,12 +413,14 @@ void MainComponent::buttonClicked(juce::Button* button){
                                       0,
                                       static_cast<int>(mOrigAudioData.size()),
                                       false);
-        pPlayback->setAudioVector(&mOrigAudioData);
-        
+        pPlayback->setAudioVector(&mOrigAudioData, 0, static_cast<int>(mOrigAudioData.size()));
+
         mResampledZoomSlider.setVisible(false);
         mResampledZoomSliderLabel.setVisible(false);
         mCycleLenHintSlider.setVisible(true);
         mCycleLenHintSliderLabel.setVisible(true);
+        mBandSlider.setVisible(false);
+        mBandSliderLabel.setVisible(false);
 
         repaint();
     } else if(button == &mModeResampledButton){
@@ -424,12 +437,16 @@ void MainComponent::buttonClicked(juce::Button* button){
                                       static_cast<int>(mResampledCycles.size()),
                                       false);
 
-        pPlayback->setAudioVector(&mResampledCycles);
+        pPlayback->setAudioVector(&mResampledCycles,
+                                  mResampledZoomSlider.getMinValue() * WTSIZE,
+                                  (mResampledZoomSlider.getMaxValue() - mResampledZoomSlider.getMinValue()) * WTSIZE);
 
         mResampledZoomSlider.setVisible(true);
         mResampledZoomSliderLabel.setVisible(true);
         mCycleLenHintSlider.setVisible(false);
         mCycleLenHintSliderLabel.setVisible(false);
+        mBandSlider.setVisible(false);
+        mBandSliderLabel.setVisible(false);
 
         repaint();
     } else if(button == &mModeResynthesizedButton){
@@ -446,12 +463,16 @@ void MainComponent::buttonClicked(juce::Button* button){
                                       static_cast<int>(mResynthesizedCycles[mSelectedBand].size()),
                                       false);
 
-        pPlayback->setAudioVector(&mResynthesizedCycles[mSelectedBand]);
+        pPlayback->setAudioVector(&mResynthesizedCycles[mSelectedBand],
+                                  mResampledZoomSlider.getMinValue() * WTSIZE,
+                                  (mResampledZoomSlider.getMaxValue() - mResampledZoomSlider.getMinValue()) * WTSIZE);
 
         mResampledZoomSlider.setVisible(true);
         mResampledZoomSliderLabel.setVisible(true);
         mCycleLenHintSlider.setVisible(false);
         mCycleLenHintSliderLabel.setVisible(false);
+        mBandSlider.setVisible(true);
+        mBandSliderLabel.setVisible(true);
 
         repaint();
     } else if(button == &mPrevCycleButton){
@@ -599,6 +620,9 @@ void MainComponent::filesDropped (const juce::StringArray& files, int x, int y)
 
 void MainComponent::updateBufferAndRecalculateZeroCrossings(juce::File& audioFile){
     pFileHandler->readAudioFileAndCopyToVector(audioFile, mOrigAudioData);
+    
+    pPlayback->setReadingStart(0);
+    pPlayback->setReadingLength(static_cast<int>(mOrigAudioData.size()));
     
     mSmallWaveform.setDisplayLengthInSamples(static_cast<int>(mOrigAudioData.size()));
     mLargeWaveform.setDisplayLengthInSamples(500);
