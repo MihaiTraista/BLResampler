@@ -11,7 +11,6 @@ public:
     Playback();
     
     void readSamplesFromVector(const juce::AudioSourceChannelInfo& bufferToFill, const std::vector<float>& vectorToReadFrom);
-    void playLiveResynthesis(const juce::AudioSourceChannelInfo& bufferToFill, const std::vector<float>& polar);
     
 private:
     int mSampleCounter = 0;
