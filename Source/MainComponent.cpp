@@ -421,6 +421,7 @@ void MainComponent::buttonClicked(juce::Button* button){
         mCycleLenHintSliderLabel.setVisible(true);
         mBandSlider.setVisible(false);
         mBandSliderLabel.setVisible(false);
+        mStartSampleIndexSlider.setVisible(true);
 
         repaint();
     } else if(button == &mModeResampledButton){
@@ -447,6 +448,7 @@ void MainComponent::buttonClicked(juce::Button* button){
         mCycleLenHintSliderLabel.setVisible(false);
         mBandSlider.setVisible(false);
         mBandSliderLabel.setVisible(false);
+        mStartSampleIndexSlider.setVisible(false);
 
         repaint();
     } else if(button == &mModeResynthesizedButton){
@@ -473,6 +475,7 @@ void MainComponent::buttonClicked(juce::Button* button){
         mCycleLenHintSliderLabel.setVisible(false);
         mBandSlider.setVisible(true);
         mBandSliderLabel.setVisible(true);
+        mStartSampleIndexSlider.setVisible(false);
 
         repaint();
     } else if(button == &mPrevCycleButton){
