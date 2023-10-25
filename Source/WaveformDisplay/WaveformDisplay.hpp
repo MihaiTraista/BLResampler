@@ -16,18 +16,24 @@
 class WaveformDisplay : public juce::Component
 {
 public:
-    WaveformDisplay(const std::vector<float>& audioVector,
+    WaveformDisplay(std::vector<float>* pAudioVector,
                     std::vector<bool>* zeroCrossings,
                     std::vector<bool>* vectorThatShowsWhichSamplesAreCommitted,
                     int* startSampleIndexPointer,
                     int* cycleLenHintPointer,
                     int* closestZeroCrossingStartPointer,
                     int* closestZeroCrossingEndPointer);
-    WaveformDisplay(const std::vector<float>& audioVector);
-    
+    WaveformDisplay(std::vector<float>* pAudioVector);
+
     ~WaveformDisplay() override;
 
     void paint(juce::Graphics&) override;
+    
+    inline void setAudioVector(std::vector<float>* pAV, bool showZeroCrossings){
+        pAudioVector = pAV;
+        mShowZeroCrossings = showZeroCrossings;
+    };
+    
     void resized() override;
 
 private:
@@ -48,10 +54,9 @@ private:
                                              const float* bufferToDraw);
     void drawTeardropShape(juce::Graphics& g, int x, int y, int width, int height, bool centered, bool reversed);
 
-
-    const std::vector<float>& mAudioVector;
-    const std::vector<bool>* pZeroCrossings = nullptr;
-    const std::vector<bool>* pVectorThatShowsWhichSamplesAreCommitted = nullptr;
+    std::vector<float>* pAudioVector = nullptr;
+    std::vector<bool>* pZeroCrossings = nullptr;
+    std::vector<bool>* pVectorThatShowsWhichSamplesAreCommitted = nullptr;
 
     int* pStartSampleIndex = 0;
     int* pCycleLenHint = 0;

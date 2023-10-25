@@ -2,15 +2,14 @@
 
 //==============================================================================
 MainComponent::MainComponent():
-    mWaveformDisplay(mOrigAudioData,
+    mWaveformDisplay(&mOrigAudioData,
                      &mZeroCrossings,
                      &mVectorThatShowsWhichSamplesAreCommitted,
                      &mStartSampleIndex,
                      &mCycleLenHint,
                      &mClosestZeroCrossingStart,
                      &mClosestZeroCrossingEnd),
-    mOriginalWaveform(mOrigAudioData),
-    mResynthesizedWaveform(mResynthesizedCycles),
+    mOriginalWaveform(&mOrigAudioData),
     pPlayback(std::make_unique<Playback>())
 {
     setSize (800, 600);
@@ -22,9 +21,6 @@ MainComponent::MainComponent():
     
     addAndMakeVisible(mWaveformDisplay);
     addAndMakeVisible(mOriginalWaveform);
-    addAndMakeVisible(mResynthesizedWaveform);
-    mResynthesizedWaveform.setEnabled(false);
-    mResynthesizedWaveform.setVisible(false);
 
     // read audio file and display waveform
     // /Users/mihaitraista/5.Sound Libraries/fl1.wav
@@ -75,35 +71,48 @@ void MainComponent::addSlidersButtonsAndLabels(){
     addAndMakeVisible(&mStartSampleIndexSlider);
     
     // Cycle Len Hint Slider and Label
-    addAndMakeVisible(&mCycleLenHintSlider);
-    mCycleLenHintSlider.setSliderStyle(juce::Slider::LinearBar);
-    // backgroundColourId none
+    mCycleLenHintSlider.setSliderStyle(juce::Slider::LinearHorizontal);
     mCycleLenHintSlider.setRange(10, 4000, 1);
+    mCycleLenHintSlider.setSkewFactor(0.25);
     mCycleLenHintSlider.setValue(600);
     mCycleLenHintSlider.addListener(this);
-    
-    addAndMakeVisible(mCycleLenHintSliderLabel);
+    addAndMakeVisible(&mCycleLenHintSlider);
+
     mCycleLenHintSliderLabel.setText("Zoom", juce::dontSendNotification);
     mCycleLenHintSliderLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
-    mCycleLenHintSliderLabel.attachToComponent(&mCycleLenHintSlider, true);
-    
-    // Commit Cycle Button
+    addAndMakeVisible(&mCycleLenHintSliderLabel);
+
+    // Band Slider and Label
+    mBandSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    mBandSlider.setRange(0, 9, 1);
+    mBandSlider.setValue(0);
+    mBandSlider.addListener(this);
+    addAndMakeVisible(&mBandSlider);
+
+    mBandSliderLabel.setText("Band", juce::dontSendNotification);
+    mBandSliderLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
+    addAndMakeVisible(&mBandSliderLabel);
+
+    // Commit, Save, Clear, Delete
     mCommitButton.setButtonText("Commit");
     mCommitButton.addListener(this);
     addAndMakeVisible(mCommitButton);
     
-    // Save Resampled Button
-    mSaveResampledFileButton.setButtonText("Save");
-    mSaveResampledFileButton.addListener(this);
-    addAndMakeVisible(mSaveResampledFileButton);
+    mSaveButton.setButtonText("Save");
+    mSaveButton.addListener(this);
+    addAndMakeVisible(mSaveButton);
     
-    // Clear Resampled Cycles Button
-    mClearResampledCyclesButton.setButtonText("Clear");
-    mClearResampledCyclesButton.addListener(this);
-    addAndMakeVisible(mClearResampledCyclesButton);
+    mClearButton.setButtonText("Clear");
+    mClearButton.addListener(this);
+    addAndMakeVisible(mClearButton);
+
+    mDeleteButton.setButtonText("Delete");
+    mDeleteButton.addListener(this);
+    addAndMakeVisible(mDeleteButton);
     
     // Show Resampled Length Label
     mResampledLengthLabel.setText("Resampled Buffer Length: 0 samples, 0 cycles", juce::dontSendNotification);
+    mResampledLengthLabel.setFont(juce::Font(12.0f));
     mResampledLengthLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
     addAndMakeVisible(mResampledLengthLabel);
     
@@ -133,30 +142,65 @@ void MainComponent::addSlidersButtonsAndLabels(){
     mInstructionsLabel.setInterceptsMouseClicks(false, false);
     addAndMakeVisible(mInstructionsLabel);
     
-    // mResampledCycleLengthComboBox
-    mResampledCycleLengthComboBox.addItem("512", 1);
-    mResampledCycleLengthComboBox.addItem("1024", 2);
-    mResampledCycleLengthComboBox.addItem("2048", 3);
-    mResampledCycleLengthComboBox.addItem("4096", 4);
-    mResampledCycleLengthComboBox.setSelectedId(2);
-    mResampledCycleLengthComboBox.addListener(this);
-    addAndMakeVisible(mResampledCycleLengthComboBox);
+    // Cycle Len ComboBox
+    mCycleLengthComboBox.addItem("512", 1);
+    mCycleLengthComboBox.addItem("1024", 2);
+    mCycleLengthComboBox.addItem("2048", 3);
+    mCycleLengthComboBox.addItem("4096", 4);
+    mCycleLengthComboBox.setSelectedId(2);
+    mCycleLengthComboBox.addListener(this);
+    addAndMakeVisible(mCycleLengthComboBox);
     
-    // mResampledCycleLengthComboBoxLabel
-    mResampledCycleLengthComboBoxLabel.setText("Resampled Cycle Len", juce::dontSendNotification);
-    mResampledCycleLengthComboBoxLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
-    mResampledCycleLengthComboBoxLabel.attachToComponent(&mResampledCycleLengthComboBox, true);
-    addAndMakeVisible(mResampledCycleLengthComboBoxLabel);
+    // Cycle Len Combo Box Label
+    mCycleLengthComboBoxLabel.setText("Cycle Len", juce::dontSendNotification);
+    mCycleLengthComboBoxLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
+    mCycleLengthComboBoxLabel.attachToComponent(&mCycleLengthComboBox, true);
+    addAndMakeVisible(mCycleLengthComboBoxLabel);
     
-    // Play Resampled Button
-    mPlayResampledButton.setButtonText("Play Resampled");
-    mPlayResampledButton.addListener(this);
-    addAndMakeVisible(mPlayResampledButton);
+    // Play Button
+    mPlayButton.setButtonText("Play");
+    mPlayButton.setToggleable(true);
+    mPlayButton.setClickingTogglesState(true);
+    mPlayButton.addListener(this);
+    addAndMakeVisible(mPlayButton);
     
-    // Play Resynthesized Button
-    mPlayResynthesizedButton.setButtonText("Play Resynthesized");
-    mPlayResynthesizedButton.addListener(this);
-    addAndMakeVisible(mPlayResynthesizedButton);
+    // Mode Tabs
+    mModeOrigButton.setButtonText("Original");
+    mModeOrigButton.setClickingTogglesState(true);
+    mModeOrigButton.setToggleState(true, juce::dontSendNotification);
+    mModeOrigButton.addListener(this);
+    addAndMakeVisible(mModeOrigButton);
+
+    mModeResampledButton.setButtonText("Resampled");
+    mModeResampledButton.setClickingTogglesState(true);
+    mModeResampledButton.setToggleState(false, juce::dontSendNotification);
+    mModeResampledButton.addListener(this);
+    addAndMakeVisible(mModeResampledButton);
+
+    mModeResynthesizedButton.setButtonText("Resynth");
+    mModeResynthesizedButton.setClickingTogglesState(true);
+    mModeResynthesizedButton.setToggleState(false, juce::dontSendNotification);
+    mModeResynthesizedButton.addListener(this);
+    addAndMakeVisible(mModeResynthesizedButton);
+    
+    // Prev Cycle, Prev Sample, Next Sample, Next Cycle Buttons
+    mPrevCycleButton.setButtonText("<");
+    mPrevCycleButton.setColour(juce::TextButton::textColourOffId, juce::Colours::yellow);
+    mPrevCycleButton.addListener(this);
+    addAndMakeVisible(mPrevCycleButton);
+
+    mPrevSampleButton.setButtonText("<");
+    mPrevSampleButton.addListener(this);
+    addAndMakeVisible(mPrevSampleButton);
+
+    mNextSampleButton.setButtonText(">");
+    mNextSampleButton.addListener(this);
+    addAndMakeVisible(mNextSampleButton);
+
+    mNextCycleButton.setButtonText(">");
+    mNextCycleButton.setColour(juce::TextButton::textColourOffId, juce::Colours::yellow);
+    mNextCycleButton.addListener(this);
+    addAndMakeVisible(mNextCycleButton);
 }
 
 void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
@@ -186,26 +230,52 @@ void MainComponent::paint (juce::Graphics& g)
 
 void MainComponent::resized()
 {
-    mWaveformDisplay.setBounds(0, 0, getWidth(), getHeight());
-    mOriginalWaveform.setBounds(0, getHeight() - 50, getWidth(), 50);
-    
-    // the mStartSampleIndexSlider should overlap mOriginalWaveform
-    mStartSampleIndexSlider.setBounds(0, getHeight() - 50, getWidth(), 50);
-    mCycleLenHintSlider.setBounds(200, 10, getWidth() - 220, 20);
-    
-    mCommitButton.setBounds(200, 40, 80, 30);
-    mSaveResampledFileButton.setBounds(290, 40, 80, 30);
-    mClearResampledCyclesButton.setBounds(380, 40, 80, 30);
-    mResampledCycleLengthComboBox.setBounds(680, 40, 100, 30);
-    
-    mResampledLengthLabel.setBounds(200, 80, getWidth() - 20, 20);
-    mEventConfirmationLabel.setBounds(10, 10, 190, 20);
-    mInstructionsLabel.setBounds(10, 40, getWidth(), getHeight());
-    
-    mPlayResampledButton.setBounds(460, 70, 100, 30);
-    mPlayResynthesizedButton.setBounds(570, 70, 100, 30);
+    float aAreaY = 0;
+    float bAreaY = 150;
+    float cAreaY = 550;
+    float aAreaHeight = 150;
+    float bAreaHeight = 400;
+    float cAreaHeight = 50;
+    float width = getWidth();
+    float gap = 5;
+    float buttonsYPosition = 50;
+    float bigButtonWidth = 86;
+    float bigButtonHeight = 30;
 
-    mResynthesizedWaveform.setBounds(0, 200, getWidth(), getHeight() - 200);
+    mWaveformDisplay.setBounds(0, bAreaY, width, bAreaHeight);
+    mOriginalWaveform.setBounds(0, cAreaY, width, cAreaHeight);
+    
+    mModeOrigButton.setBounds(gap, 50, bigButtonWidth, bigButtonHeight);
+    mModeResampledButton.setBounds(gap + bigButtonWidth + 2, 50, bigButtonWidth, bigButtonHeight);
+    mModeResynthesizedButton.setBounds(gap + bigButtonWidth * 2 + 4, 50, bigButtonWidth, bigButtonHeight);
+    
+    mPrevCycleButton.setBounds(gap, 82, 20, 20);
+    mPrevSampleButton.setBounds(gap + 22, 82, 20, 20);
+    mNextSampleButton.setBounds(gap + 44, 82, 20, 20);
+    mNextCycleButton.setBounds(gap + 66, 82, 20, 20);
+
+    // SLIDERS
+    mBandSliderLabel.setBounds(gap + 140, 105, 100, 10);
+    mBandSlider.setBounds(gap, 110, 262, 20);
+    mCycleLenHintSliderLabel.setBounds(gap + 140, 125, 100, 10);
+    mCycleLenHintSlider.setBounds(gap, 130, 262, 20);
+
+    // the mStartSampleIndexSlider should overlap mOriginalWaveform
+    mStartSampleIndexSlider.setBounds(0, cAreaY, width, cAreaHeight);
+
+    // Commit, Save, Clear, Delete
+    mCommitButton.setBounds(553, 50, 58, 30);
+    mSaveButton.setBounds(613, 50, 58, 30);
+    mClearButton.setBounds(673, 50, 58, 30);
+    mDeleteButton.setBounds(733, 50, 58, 30);
+    
+    mCycleLengthComboBox.setBounds(733, 82, 58, 20);
+    
+    mEventConfirmationLabel.setBounds(360, bAreaY, width - 300, 16);
+    mResampledLengthLabel.setBounds(280, cAreaY - 10, width - 300, 10);
+//    mInstructionsLabel.setBounds(10, 40, getWidth(), getHeight());
+    
+    mPlayButton.setBounds(360, 50, 80, 50);
 }
 
 void MainComponent::sliderValueChanged(juce::Slider* slider)
@@ -243,7 +313,7 @@ void MainComponent::sliderValueChanged(juce::Slider* slider)
 
 void MainComponent::comboBoxChanged(juce::ComboBox* box)
 {
-    if (box == &mResampledCycleLengthComboBox)
+    if (box == &mCycleLengthComboBox)
     {
         int newValue = box->getText().getIntValue();
         std::cout << "New WTSIZE = " << newValue << std::endl;
@@ -254,49 +324,64 @@ void MainComponent::comboBoxChanged(juce::ComboBox* box)
 void MainComponent::buttonClicked(juce::Button* button){
     if (button == &mCommitButton){
         handleCommitButton();
-    } else if (button == &mSaveResampledFileButton){
+    } else if (button == &mSaveButton){
         pFileHandler->saveVectorAsAudioFileToDesktop(mResampledCycles, "resampled");
         pFileHandler->saveVectorAsAudioFileToDesktop(mPolarCycles, "polar");
         pFileHandler->saveVectorAsAudioFileToDesktop(mResynthesizedCycles, "resynthesized");
 
         mEventConfirmationLabel.setText("File Saved!", juce::dontSendNotification);
         mEventConfirmationLabel.setVisible(true);
-    } else if (button == &mClearResampledCyclesButton){
+    } else if (button == &mClearButton){
         mResampledCycles.clear();
         mPolarCycles.clear();
         mResynthesizedCycles.clear();
         updateLengthInfoLabel();
         mVectorThatShowsWhichSamplesAreCommitted.assign(mVectorThatShowsWhichSamplesAreCommitted.size(), false);
-    } else if (button == &mPlayResampledButton){
-        if(mPlaybackState == PlaybackStates::Stopped || mPlaybackState == PlaybackStates::PlayingResynthesized){
-            mPlayResampledButton.setToggleState(true, juce::dontSendNotification);
-            mPlayResynthesizedButton.setToggleState(false, juce::dontSendNotification);
-            mPlaybackState = PlaybackStates::PlayingResampled;
-        } else {
-            mPlayResampledButton.setToggleState(false, juce::dontSendNotification);
-            mPlaybackState = PlaybackStates::Stopped;
-        }
-    } else if (button == &mPlayResynthesizedButton){
-        if(mPlaybackState == PlaybackStates::Stopped || mPlaybackState == PlaybackStates::PlayingResampled){
-
-            int nCycles = static_cast<int>(mResampledCycles.size()) / static_cast<int>(WTSIZE);
-
-            // harmonicsLimit = 512 = Niquist / freq = 22050 / 43 Hz (1024 samples is 43 Hz)
-            int harmonicsLimit = 512;
-            Fourier::idft(mPolarCycles, mResynthesizedCycles, harmonicsLimit, 50.0f, nCycles);
-            
-            mPlayResynthesizedButton.setToggleState(true, juce::dontSendNotification);
-            mPlayResampledButton.setToggleState(false, juce::dontSendNotification);
+    } else if (button == &mDeleteButton){
+    } else if (button == &mPlayButton){
+        bool playButtonState = mPlayButton.getToggleState();
+        
+        if(playButtonState){
             mPlaybackState = PlaybackStates::PlayingResynthesized;
-            
-            mResynthesizedWaveform.setEnabled(true);
-            mResynthesizedWaveform.setVisible(true);
         } else {
-            mPlayResynthesizedButton.setToggleState(false, juce::dontSendNotification);
             mPlaybackState = PlaybackStates::Stopped;
-            mResynthesizedWaveform.setEnabled(false);
-            mResynthesizedWaveform.setVisible(false);
         }
+    } else if(button == &mModeOrigButton){
+        mModeOrigButton.setToggleState(true, juce::dontSendNotification);
+        mModeResampledButton.setToggleState(false, juce::dontSendNotification);
+        mModeResynthesizedButton.setToggleState(false, juce::dontSendNotification);
+        mWaveformDisplay.setAudioVector(&mOrigAudioData, true);
+        mOriginalWaveform.setAudioVector(&mOrigAudioData, false);
+        repaint();
+    } else if(button == &mModeResampledButton){
+        mModeOrigButton.setToggleState(false, juce::dontSendNotification);
+        mModeResampledButton.setToggleState(true, juce::dontSendNotification);
+        mModeResynthesizedButton.setToggleState(false, juce::dontSendNotification);
+    } else if(button == &mModeResynthesizedButton){
+        mModeOrigButton.setToggleState(false, juce::dontSendNotification);
+        mModeResampledButton.setToggleState(false, juce::dontSendNotification);
+        mModeResynthesizedButton.setToggleState(true, juce::dontSendNotification);
+        mWaveformDisplay.setAudioVector(&mResynthesizedCycles, false);
+        mOriginalWaveform.setAudioVector(&mResynthesizedCycles, false);
+        repaint();
+    } else if(button == &mPrevCycleButton){
+        int cycleLen = mClosestZeroCrossingEnd - mClosestZeroCrossingStart;
+        int newVal = mStartSampleIndexSlider.getValue() - cycleLen;
+        if(newVal < 0)
+            newVal = 0;
+        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+    } else if(button == &mPrevSampleButton){
+        int newVal = mStartSampleIndexSlider.getValue() - 2;
+        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+    } else if(button == &mNextSampleButton){
+        int newVal = mStartSampleIndexSlider.getValue() + 2;
+        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+    } else if(button == &mNextCycleButton){
+        int cycleLen = mClosestZeroCrossingEnd - mClosestZeroCrossingStart;
+        int newVal = mStartSampleIndexSlider.getValue() + cycleLen;
+        if(newVal > mOrigAudioData.size() - cycleLen)
+            newVal = static_cast<int>(mOrigAudioData.size()) - cycleLen;
+        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
     }
 }
 
@@ -306,26 +391,16 @@ bool MainComponent::keyPressed(const juce::KeyPress& key, Component* originating
         handleCommitButton();
         return true;
     } else if (key.getTextCharacter() == 'H' || key.getTextCharacter() == 'h'){
-        int cycleLen = mClosestZeroCrossingEnd - mClosestZeroCrossingStart;
-        int newVal = mStartSampleIndexSlider.getValue() - cycleLen;
-        if(newVal < 0)
-            newVal = 0;
-        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+        mPrevCycleButton.triggerClick();
         return true;
     } else if (key.getTextCharacter() == 'L' || key.getTextCharacter() == 'l'){
-        int cycleLen = mClosestZeroCrossingEnd - mClosestZeroCrossingStart;
-        int newVal = mStartSampleIndexSlider.getValue() + cycleLen;
-        if(newVal > mOrigAudioData.size() - cycleLen)
-            newVal = mOrigAudioData.size() - cycleLen;
-        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+        mNextCycleButton.triggerClick();
         return true;
     } else if (key.getTextCharacter() == 'J' || key.getTextCharacter() == 'j'){
-        int newVal = mStartSampleIndexSlider.getValue() - 2;
-        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+        mPrevSampleButton.triggerClick();
         return true;
     } else if (key.getTextCharacter() == 'K' || key.getTextCharacter() == 'k'){
-        int newVal = mStartSampleIndexSlider.getValue() + 2;
-        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+        mNextSampleButton.triggerClick();
         return true;
     } else if (key.getTextCharacter() == 'I' || key.getTextCharacter() == 'i'){
         int newVal = mCycleLenHintSlider.getValue() - 4;
@@ -384,7 +459,10 @@ void MainComponent::handleCommitButton(){
     
     Fourier::fillDftPolar(resampled, polarValues);
 
-//    Fourier::idft(polarValues, resynthesized, WTSIZE, 50.0f, 1);
+    // harmonicsLimit = 512 because Niquist(22050) / freq(43) = 512 (1024 samples is 43 Hz)
+    int harmonicsLimit = 512;
+
+    Fourier::idft(polarValues, resynthesized, harmonicsLimit, 50.0f, 1);
 
 //    pFileHandler->saveVectorAsAudioFileToDesktop(resynthesized, "resynthesized-single-cycle");
     

@@ -72,22 +72,33 @@ private:
     juce::Slider mStartSampleIndexSlider;
     juce::Slider mCycleLenHintSlider;
     juce::Label mCycleLenHintSliderLabel;
+    juce::Slider mBandSlider;
+    juce::Label mBandSliderLabel;
+
     juce::TextButton mCommitButton;
-    juce::TextButton mSaveResampledFileButton;
-    juce::TextButton mClearResampledCyclesButton;
+    juce::TextButton mSaveButton;
+    juce::TextButton mClearButton;
+    juce::TextButton mDeleteButton;
+
     juce::Label mResampledLengthLabel;
     juce::Label mEventConfirmationLabel;
     juce::Label mInstructionsLabel;
-    juce::ComboBox mResampledCycleLengthComboBox;
-    juce::Label mResampledCycleLengthComboBoxLabel;
-    juce::TextButton mPlayResampledButton;
-    juce::TextButton mPlayResynthesizedButton;
-    juce::TextButton mPlayModifiedResynthesisButton;
+    juce::ComboBox mCycleLengthComboBox;
+    juce::Label mCycleLengthComboBoxLabel;
     
+    juce::TextButton mPlayButton;
+
+    juce::TextButton mModeOrigButton;
+    juce::TextButton mModeResampledButton;
+    juce::TextButton mModeResynthesizedButton;
+
+    juce::TextButton mPrevCycleButton;
+    juce::TextButton mPrevSampleButton;
+    juce::TextButton mNextSampleButton;
+    juce::TextButton mNextCycleButton;
 
     WaveformDisplay mWaveformDisplay;
     WaveformDisplay mOriginalWaveform;
-    WaveformDisplay mResynthesizedWaveform;
     
     std::unique_ptr<FileHandler> pFileHandler = std::make_unique<FileHandler>();
     std::unique_ptr<Resampler> pResampler = std::make_unique<Resampler>();
