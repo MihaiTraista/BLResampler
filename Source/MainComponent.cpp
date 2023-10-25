@@ -245,6 +245,12 @@ void MainComponent::releaseResources()
 void MainComponent::paint (juce::Graphics& g)
 {
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+
+//    juce::Image titleImage = juce::ImageCache::getFromMemory(BinaryData::BLResampler_Title2_png, BinaryData::BLResampler_Title2_pngSize);
+//
+//    juce::Rectangle<float> titleImageArea (200, 20, 280, 16);
+//    g.drawImage(titleImage, titleImageArea, juce::RectanglePlacement::stretchToFit);    
+
     grabKeyboardFocus();
 }
 

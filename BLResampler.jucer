@@ -3,6 +3,10 @@
 <JUCERPROJECT id="qG7Xf4" name="BLResampler" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
   <MAINGROUP id="LyixqN" name="BLResampler">
+    <GROUP id="{3324218E-154D-AEEC-5682-61EC5D1DF168}" name="Resources">
+      <FILE id="CzlgAq" name="BLResampler_Title2.png" compile="0" resource="1"
+            file="Resources/BLResampler_Title2.png"/>
+    </GROUP>
     <GROUP id="{9E17AB2C-4885-DB41-1B2E-9EB4365D5891}" name="Source">
       <GROUP id="{7E56B31E-E2F1-FA5D-CFCA-86D9A3D07FD8}" name="Playback">
         <FILE id="z3H2aB" name="Playback.cpp" compile="1" resource="0" file="Source/Playback/Playback.cpp"/>
