@@ -13,22 +13,29 @@
 WaveformDisplay::WaveformDisplay(std::vector<float>* audioVector,
                                  std::vector<bool>* zeroCrossings,
                                  std::vector<bool>* vectorThatShowsWhichSamplesAreCommitted,
-                                 int* startSampleIndexPointer,
-                                 int* cycleLenHintPointer,
+                                 int displayStartSample,
+                                 int displayLengthInSamples,
                                  int* closestZeroCrossingStartPointer,
                                  int* closestZeroCrossingEndPointer):
     pAudioVector(audioVector),
     pZeroCrossings(zeroCrossings),
     pVectorThatShowsWhichSamplesAreCommitted(vectorThatShowsWhichSamplesAreCommitted),
-    pStartSampleIndex(startSampleIndexPointer),
-    pCycleLenHint(cycleLenHintPointer),
+    mDisplayStartSample(displayStartSample),
+    mDisplayLengthInSamples(displayLengthInSamples),
     pClosestZeroCrossingStart(closestZeroCrossingStartPointer),
     pClosestZeroCrossingEnd(closestZeroCrossingEndPointer),
     mShowZeroCrossings(true)
 {}
 
-WaveformDisplay::WaveformDisplay(std::vector<float>* audioVector):
+
+
+
+WaveformDisplay::WaveformDisplay(std::vector<float>* audioVector,
+                                 int displayStartSample,
+                                 int displayLengthInSamples):
     pAudioVector(audioVector),
+    mDisplayStartSample(displayStartSample),
+    mDisplayLengthInSamples(displayLengthInSamples),
     mShowZeroCrossings(false)
 {}
 
@@ -38,7 +45,7 @@ WaveformDisplay::~WaveformDisplay()
 
 void WaveformDisplay::paint(juce::Graphics& g)
 {
-    if (pAudioVector->size() < 1)
+    if (pAudioVector->size() < 2 || mDisplayLengthInSamples < 2)
         return;
     
     g.fillAll(juce::Colour::fromRGB(10, 10, 20));
@@ -47,29 +54,23 @@ void WaveformDisplay::paint(juce::Graphics& g)
 
     float width = getWidth();
     float height = getHeight();
-    int numSamplesToDisplay;
-    
-    if(mShowZeroCrossings)
-        numSamplesToDisplay = *pCycleLenHint * 2;
-    else
-        numSamplesToDisplay = static_cast<int>(pAudioVector->size());
-    
+
     // if the zoom factor is larger than 10 times the width, then we draw an envelope follower
     // by averaging the absolute sample values at that location and drawing a line that is symmetric to the center
     // if the zoom factor is less than 10 times the width,
     // we draw the actual sample values with lines that are above or below the center
-    bool zoomOutThresholdExceeded = numSamplesToDisplay > width * 10;
+    bool zoomOutThresholdExceeded = mDisplayLengthInSamples > width * 10;
 
     const float* bufferToDraw = pAudioVector->data();
-    
+
     if (zoomOutThresholdExceeded){
-        drawWaveformAsEnvelopeFollower(g, width, height, numSamplesToDisplay, bufferToDraw);
+        drawWaveformAsEnvelopeFollower(g, width, height, mDisplayLengthInSamples, bufferToDraw);
     } else{
-        drawWaveformSampleBySample(g, width, height, numSamplesToDisplay, bufferToDraw);
+        drawWaveformSampleBySample(g, width, height, mDisplayLengthInSamples, bufferToDraw);
     }
     
     if(mShowZeroCrossings)
-        drawZeroCrossingCirclesAndHintLines(g, width, height, numSamplesToDisplay, bufferToDraw);
+        drawZeroCrossingCirclesAndHintLines(g, width, height, mDisplayLengthInSamples, bufferToDraw);
 }
 
 void WaveformDisplay::resized()
@@ -85,8 +86,8 @@ void WaveformDisplay::drawWaveformAsEnvelopeFollower(juce::Graphics& g,
     
     for (int x = 0; x < width; ++x){
         if(mShowZeroCrossings){
-            startSampleIndex = juce::jmap<float>(x, 0, width, *pStartSampleIndex, *pStartSampleIndex + numSamplesToDisplay);
-            endSampleIndex = juce::jmap<float>(x + 1, 0, width, *pStartSampleIndex, *pStartSampleIndex + numSamplesToDisplay);
+            startSampleIndex = juce::jmap<float>(x, 0, width, mDisplayStartSample, mDisplayStartSample + numSamplesToDisplay);
+            endSampleIndex = juce::jmap<float>(x + 1, 0, width, mDisplayStartSample, mDisplayStartSample + numSamplesToDisplay);
         } else {
             startSampleIndex = juce::jmap<float>(x, 0, width, 0, numSamplesToDisplay);
             endSampleIndex = juce::jmap<float>(x + 1, 0, width, 0, numSamplesToDisplay);
@@ -113,7 +114,7 @@ void WaveformDisplay::drawWaveformSampleBySample(juce::Graphics& g,
     for (int x = 0; x < width; ++x)
     {
         if(mShowZeroCrossings)
-            sampleIndex = juce::jmap<float>(x, 0, width, *pStartSampleIndex, *pStartSampleIndex + numSamplesToDisplay);
+            sampleIndex = juce::jmap<float>(x, 0, width, mDisplayStartSample, mDisplayStartSample + numSamplesToDisplay);
         else
             sampleIndex = juce::jmap<float>(x, 0, width, 0, numSamplesToDisplay);
 
@@ -137,15 +138,15 @@ void WaveformDisplay::drawZeroCrossingCirclesAndHintLines(juce::Graphics& g,
                                                           int height,
                                                           int numSamplesToDisplay,
                                                           const float* bufferToDraw){
-    auto startIndexInZeroCrossings = *pStartSampleIndex;
-    auto endIndexInZeroCrossings = *pStartSampleIndex + numSamplesToDisplay;
+    auto startIndexInZeroCrossings = mDisplayStartSample;
+    auto endIndexInZeroCrossings = mDisplayStartSample + numSamplesToDisplay;
     
     for (int index = startIndexInZeroCrossings; index < endIndexInZeroCrossings; ++index)
     {
         if((*pZeroCrossings)[index] == true)
         {
             // Map the sample index to an x-coordinate on the screen
-            auto x = juce::jmap<float>(index, *pStartSampleIndex, *pStartSampleIndex + numSamplesToDisplay, 0, width);
+            auto x = juce::jmap<float>(index, mDisplayStartSample, mDisplayStartSample + numSamplesToDisplay, 0, width);
 
             g.setColour(juce::Colour::fromRGB(10, 180, 255));
             g.fillEllipse(x - 2, height / 2.0f - 2, 4, 4);

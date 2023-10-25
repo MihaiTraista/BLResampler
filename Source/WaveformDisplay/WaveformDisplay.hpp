@@ -19,20 +19,30 @@ public:
     WaveformDisplay(std::vector<float>* pAudioVector,
                     std::vector<bool>* zeroCrossings,
                     std::vector<bool>* vectorThatShowsWhichSamplesAreCommitted,
-                    int* startSampleIndexPointer,
-                    int* cycleLenHintPointer,
+                    int displayStartSample,
+                    int displayLengthInSamples,
                     int* closestZeroCrossingStartPointer,
                     int* closestZeroCrossingEndPointer);
-    WaveformDisplay(std::vector<float>* pAudioVector);
+    WaveformDisplay(std::vector<float>* pAudioVector,
+                    int displayStartSample,
+                    int displayLengthInSamples);
 
     ~WaveformDisplay() override;
 
     void paint(juce::Graphics&) override;
     
-    inline void setAudioVector(std::vector<float>* pAV, bool showZeroCrossings){
+    inline void setAudioVector(std::vector<float>* pAV,
+                               int displayStartSample,
+                               int displayLengthInSamples,
+                               bool showZeroCrossings){
         pAudioVector = pAV;
+        mDisplayStartSample = displayStartSample;
+        mDisplayLengthInSamples = displayLengthInSamples;
         mShowZeroCrossings = showZeroCrossings;
     };
+
+    inline void setDisplayStartSample(int val){ mDisplayStartSample = val; };
+    inline void setDisplayLengthInSamples(int val){ mDisplayLengthInSamples = val; };
     
     void resized() override;
 
@@ -58,10 +68,10 @@ private:
     std::vector<bool>* pZeroCrossings = nullptr;
     std::vector<bool>* pVectorThatShowsWhichSamplesAreCommitted = nullptr;
 
-    int* pStartSampleIndex = 0;
-    int* pCycleLenHint = 0;
-    int* pClosestZeroCrossingStart;
-    int* pClosestZeroCrossingEnd;
+    int mDisplayStartSample = 0;
+    int mDisplayLengthInSamples = 500;
+    int* pClosestZeroCrossingStart = nullptr;
+    int* pClosestZeroCrossingEnd = nullptr;
 
     bool mShowZeroCrossings = false;
 

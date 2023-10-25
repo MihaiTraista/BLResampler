@@ -75,6 +75,8 @@ private:
     juce::Label mCycleLenHintSliderLabel;
     juce::Slider mBandSlider;
     juce::Label mBandSliderLabel;
+    juce::Slider mResampledZoomSlider;
+    juce::Label mResampledZoomSliderLabel;
 
     juce::TextButton mCommitButton;
     juce::TextButton mSaveButton;
