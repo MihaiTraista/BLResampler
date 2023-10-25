@@ -2,14 +2,14 @@
 
 //==============================================================================
 MainComponent::MainComponent():
-    mWaveformDisplay(&mOrigAudioData,
+    mLargeWaveform(&mOrigAudioData,
                      &mZeroCrossings,
                      &mVectorThatShowsWhichSamplesAreCommitted,
                      &mStartSampleIndex,
                      &mCycleLenHint,
                      &mClosestZeroCrossingStart,
                      &mClosestZeroCrossingEnd),
-    mOriginalWaveform(&mOrigAudioData),
+    mSmallWaveform(&mOrigAudioData),
     pPlayback(std::make_unique<Playback>())
 {
     setSize (800, 600);
@@ -19,8 +19,8 @@ MainComponent::MainComponent():
     setWantsKeyboardFocus (true);
     addKeyListener(this);
     
-    addAndMakeVisible(mWaveformDisplay);
-    addAndMakeVisible(mOriginalWaveform);
+    addAndMakeVisible(mLargeWaveform);
+    addAndMakeVisible(mSmallWaveform);
 
     // read audio file and display waveform
     // /Users/mihaitraista/5.Sound Libraries/fl1.wav
@@ -242,8 +242,8 @@ void MainComponent::resized()
     float bigButtonWidth = 86;
     float bigButtonHeight = 30;
 
-    mWaveformDisplay.setBounds(0, bAreaY, width, bAreaHeight);
-    mOriginalWaveform.setBounds(0, cAreaY, width, cAreaHeight);
+    mLargeWaveform.setBounds(0, bAreaY, width, bAreaHeight);
+    mSmallWaveform.setBounds(0, cAreaY, width, cAreaHeight);
     
     mModeOrigButton.setBounds(gap, 50, bigButtonWidth, bigButtonHeight);
     mModeResampledButton.setBounds(gap + bigButtonWidth + 2, 50, bigButtonWidth, bigButtonHeight);
@@ -260,7 +260,7 @@ void MainComponent::resized()
     mCycleLenHintSliderLabel.setBounds(gap + 140, 125, 100, 10);
     mCycleLenHintSlider.setBounds(gap, 130, 262, 20);
 
-    // the mStartSampleIndexSlider should overlap mOriginalWaveform
+    // the mStartSampleIndexSlider should overlap mSmallWaveform
     mStartSampleIndexSlider.setBounds(0, cAreaY, width, cAreaHeight);
 
     // Commit, Save, Clear, Delete
@@ -350,8 +350,8 @@ void MainComponent::buttonClicked(juce::Button* button){
         mModeOrigButton.setToggleState(true, juce::dontSendNotification);
         mModeResampledButton.setToggleState(false, juce::dontSendNotification);
         mModeResynthesizedButton.setToggleState(false, juce::dontSendNotification);
-        mWaveformDisplay.setAudioVector(&mOrigAudioData, true);
-        mOriginalWaveform.setAudioVector(&mOrigAudioData, false);
+        mLargeWaveform.setAudioVector(&mOrigAudioData, true);
+        mSmallWaveform.setAudioVector(&mOrigAudioData, false);
         repaint();
     } else if(button == &mModeResampledButton){
         mModeOrigButton.setToggleState(false, juce::dontSendNotification);
@@ -361,8 +361,8 @@ void MainComponent::buttonClicked(juce::Button* button){
         mModeOrigButton.setToggleState(false, juce::dontSendNotification);
         mModeResampledButton.setToggleState(false, juce::dontSendNotification);
         mModeResynthesizedButton.setToggleState(true, juce::dontSendNotification);
-        mWaveformDisplay.setAudioVector(&mResynthesizedCycles, false);
-        mOriginalWaveform.setAudioVector(&mResynthesizedCycles, false);
+        mLargeWaveform.setAudioVector(&mResynthesizedCycles, false);
+        mSmallWaveform.setAudioVector(&mResynthesizedCycles, false);
         repaint();
     } else if(button == &mPrevCycleButton){
         int cycleLen = mClosestZeroCrossingEnd - mClosestZeroCrossingStart;
@@ -418,6 +418,9 @@ void MainComponent::handleCommitButton(){
     const float* mAudioBufferData = mOrigAudioData.data();
 
     int originalLengthOfCycle = mClosestZeroCrossingEnd - mClosestZeroCrossingStart;
+    
+    if(originalLengthOfCycle < 3)
+        return;
 
     // set to true all indexed from the original file that are going to be used
     for(int i = mClosestZeroCrossingStart; i < mClosestZeroCrossingEnd; ++i){

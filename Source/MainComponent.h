@@ -97,9 +97,9 @@ private:
     juce::TextButton mNextSampleButton;
     juce::TextButton mNextCycleButton;
 
-    WaveformDisplay mWaveformDisplay;
-    WaveformDisplay mOriginalWaveform;
-    
+    WaveformDisplay mLargeWaveform;
+    WaveformDisplay mSmallWaveform;
+
     std::unique_ptr<FileHandler> pFileHandler = std::make_unique<FileHandler>();
     std::unique_ptr<Resampler> pResampler = std::make_unique<Resampler>();
     std::unique_ptr<ZeroCrossingFinder> pZeroCrossingFinder = std::make_unique<ZeroCrossingFinder>();
