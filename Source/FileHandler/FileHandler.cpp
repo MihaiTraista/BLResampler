@@ -54,7 +54,11 @@ void FileHandler::readAudioFileAndCopyToVector(juce::File& audioFile, std::vecto
     }
 }
 
-void FileHandler::saveVectorAsAudioFileToDesktop(const std::vector<float>& audioData, const juce::String fileName)
+void FileHandler::exportFiles(const std::vector<float>& origAudioData,
+                            const std::vector<float>& resampledCycles,
+                            const std::vector<float>& polarCycles,
+                            const std::array<std::vector<float>, N_WT_BANDS>& resynthesizedCycles,
+                            const juce::String exportFolderName)
 {
     // Get the user's desktop directory
     juce::File desktop = juce::File::getSpecialLocation(juce::File::userDesktopDirectory);
@@ -63,14 +67,30 @@ void FileHandler::saveVectorAsAudioFileToDesktop(const std::vector<float>& audio
     juce::String timeString = currentTime.toString(true, true, true, true); // date, time, include seconds, use 24-hour clock
     timeString = timeString.replaceCharacters(": ", "--");
 
+    // BLResampler folder on desktop
+    juce::File folderBLResampler = desktop.getChildFile("BLResamplerExports/");
+    if (!folderBLResampler.exists())
+        folderBLResampler.createDirectory();
+
+    juce::File folderOfThisExport = folderBLResampler.getChildFile(exportFolderName + "--" + timeString);
+    folderOfThisExport.createDirectory();
+
+    saveMonoAudioFile(origAudioData, folderOfThisExport, "original");
+    saveMonoAudioFile(resampledCycles, folderOfThisExport, "resampled");
+    saveMonoAudioFile(polarCycles, folderOfThisExport, "polar");
+    saveMultiChannelAudioFile(resynthesizedCycles, folderOfThisExport, "resynthesized");
+}
+
+void FileHandler::saveMonoAudioFile(const std::vector<float> &audioVector,
+                                                 const juce::File& folderOfThisExport,
+                                                 const juce::String fileName){
     // Create the complete filename
-    juce::File audioFile = desktop.getChildFile(fileName + "--" + timeString + ".wav");
+    juce::File audioFile = folderOfThisExport.getChildFile(fileName + ".wav");
 
     // Create a FileOutputStream for the audioFile
     std::unique_ptr<juce::FileOutputStream> fileStream(audioFile.createOutputStream());
 
-    if (fileStream)
-    {
+    if (fileStream){
         // Create a WavAudioFormat object
         juce::WavAudioFormat wavFormat;
 
@@ -83,12 +103,52 @@ void FileHandler::saveVectorAsAudioFileToDesktop(const std::vector<float>& audio
             fileStream.release(); // The writer will delete the stream for us
             
             // Put the vector data into an AudioBuffer
-            juce::AudioBuffer<float> buffer(1, audioData.size());
-            buffer.copyFrom(0, 0, audioData.data(), audioData.size());
+            juce::AudioBuffer<float> buffer(1, static_cast<int>(audioVector.size()));
+            buffer.copyFrom(0, 0, audioVector.data(), static_cast<int>(audioVector.size()));
 
             // Write buffer to audio file
-            audioWriter->writeFromAudioSampleBuffer(buffer, 0, audioData.size());
+            audioWriter->writeFromAudioSampleBuffer(buffer, 0, static_cast<int>(audioVector.size()));
         }
+    } else {
+        std::cerr << "Could not save to file" << std::endl;
+    }
+}
+
+void FileHandler::saveMultiChannelAudioFile(const std::array<std::vector<float>, N_WT_BANDS>& arrayOfVectors,
+                                            const juce::File& folderOfThisExport,
+                                            const juce::String fileName){
+    // all channels will have the same length, so we take numSamples from channel zero
+    int numSamples = static_cast<int>(arrayOfVectors[0].size());
+    
+    // Create the complete filename
+    juce::File audioFile = folderOfThisExport.getChildFile(fileName + ".wav");
+
+    // Create a FileOutputStream for the audioFile
+    std::unique_ptr<juce::FileOutputStream> fileStream(audioFile.createOutputStream());
+
+    if (fileStream){
+        // Create a WavAudioFormat object
+        juce::WavAudioFormat wavFormat;
+
+        // Create an AudioFormatWriter
+        std::unique_ptr<juce::AudioFormatWriter> audioWriter;
+        audioWriter.reset(wavFormat.createWriterFor(fileStream.get(), 44100, N_WT_BANDS, 16, {}, 0));
+
+        if (audioWriter)
+        {
+            fileStream.release(); // The writer will delete the stream for us
+            
+            // this 10-channel buffer will store all data from the arrayOfVectors
+            juce::AudioBuffer<float> buffer(N_WT_BANDS, numSamples);
+
+            for(int bandIndex = 0; bandIndex < N_WT_BANDS; bandIndex++){
+                buffer.copyFrom(bandIndex, 0, arrayOfVectors[bandIndex].data(), numSamples);
+            }
+            // Write buffer to audio file
+            audioWriter->writeFromAudioSampleBuffer(buffer, 0, numSamples);
+        }
+    } else {
+        std::cerr << "Could not save to file" << std::endl;
     }
 }
 

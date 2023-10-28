@@ -10,8 +10,11 @@
 
 #pragma once
 
+#include <array>
 #include <JuceHeader.h>
 #include <vector>
+
+#include "../Globals/Globals.hpp"
 
 class FileHandler
 {
@@ -20,8 +23,20 @@ public:
     ~FileHandler();
 
     void readAudioFileAndCopyToVector(juce::File& audioFile, std::vector<float>& audioVector);
-    void saveVectorAsAudioFileToDesktop(const std::vector<float>& audioData, const juce::String fileName);
+    void exportFiles(const std::vector<float>& origAudioData,
+                     const std::vector<float>& resampledCycles,
+                     const std::vector<float>& polarCycles,
+                     const std::array<std::vector<float>, N_WT_BANDS>& resynthesizedCycles,
+                     const juce::String exportFolderName);
+
+    void saveMonoAudioFile(const std::vector<float> &audioVector,
+                           const juce::File& folderOfThisExport,
+                           const juce::String fileName);
     
+    void saveMultiChannelAudioFile(const std::array<std::vector<float>, N_WT_BANDS>& arrayOfVectors,
+                                   const juce::File& folderOfThisExport,
+                                   const juce::String fileName);
+
 private:
     void normalizeAudioVector(std::vector<float>& audioData);
     

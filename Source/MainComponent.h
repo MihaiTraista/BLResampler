@@ -68,6 +68,8 @@ private:
     std::vector<float> mPolarCycles;
     std::array<std::vector<float>, N_WT_BANDS> mResynthesizedCycles;
     
+    juce::String mOriginalFileName;
+    
     PlaybackStates mPlaybackState = PlaybackStates::Stopped;
 
     juce::Slider mStartSampleIndexSlider;

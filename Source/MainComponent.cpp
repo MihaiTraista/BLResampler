@@ -29,6 +29,9 @@ MainComponent::MainComponent():
     // /Users/mihaitraista/4.Projects/Coding/JUCE/CycleChopper/Resources/Cello_C2_1.wav
     juce::File audioFile = juce::File("/Users/mihaitraista/4.Projects/Coding/JUCE/WebTenori/Resources/ForResampling/Flute-Long.wav");
 
+    // this will be updated when the user drags and drops a file
+    mOriginalFileName = "Flute-Long";
+    
     updateBufferAndRecalculateZeroCrossings(audioFile);
 
     addSlidersButtonsAndLabels();
@@ -386,9 +389,11 @@ void MainComponent::buttonClicked(juce::Button* button){
     if (button == &mCommitButton){
         handleCommitButton();
     } else if (button == &mSaveButton){
-        pFileHandler->saveVectorAsAudioFileToDesktop(mResampledCycles, "resampled");
-        pFileHandler->saveVectorAsAudioFileToDesktop(mPolarCycles, "polar");
-        pFileHandler->saveVectorAsAudioFileToDesktop(mResynthesizedCycles[mSelectedBand], "resynthesized");
+        pFileHandler->exportFiles(mOrigAudioData,
+                                  mResampledCycles,
+                                  mPolarCycles,
+                                  mResynthesizedCycles,
+                                  mOriginalFileName);
 
         mEventConfirmationLabel.setText("File Saved!", juce::dontSendNotification);
         mEventConfirmationLabel.setVisible(true);
