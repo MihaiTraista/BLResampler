@@ -8,6 +8,12 @@
             file="Resources/BLResampler_Title2.png"/>
     </GROUP>
     <GROUP id="{9E17AB2C-4885-DB41-1B2E-9EB4365D5891}" name="Source">
+      <GROUP id="{084C101D-DF86-4A45-008A-ED0C9BEAF4B3}" name="DragDropArea">
+        <FILE id="HhaKT0" name="DragDropArea.cpp" compile="1" resource="0"
+              file="Source/DragDropArea/DragDropArea.cpp"/>
+        <FILE id="EC7wfm" name="DragDropArea.hpp" compile="0" resource="0"
+              file="Source/DragDropArea/DragDropArea.hpp"/>
+      </GROUP>
       <GROUP id="{7E56B31E-E2F1-FA5D-CFCA-86D9A3D07FD8}" name="Playback">
         <FILE id="z3H2aB" name="Playback.cpp" compile="1" resource="0" file="Source/Playback/Playback.cpp"/>
         <FILE id="FVcZU2" name="Playback.hpp" compile="0" resource="0" file="Source/Playback/Playback.hpp"/>

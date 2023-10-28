@@ -10,6 +10,16 @@ MainComponent::MainComponent():
                      &mClosestZeroCrossingStart,
                      &mClosestZeroCrossingEnd),
     mSmallWaveform(&mOrigAudioData, 0, 0),
+
+    mDragDropAreaOriginal("Original",
+                          mOrigAudioData,
+                          mOriginalFileName,
+                          std::bind(&MainComponent::newFileWasDropped, this)),
+    mDragDropAreaResampled("Resampled",
+                           mResampledCycles,
+                           mOriginalFileName,
+                           std::bind(&MainComponent::newFileWasDropped, this)),
+
     pPlayback(std::make_unique<Playback>(&mOrigAudioData, 0, 0))
 {
     setSize (800, 600);
@@ -21,6 +31,8 @@ MainComponent::MainComponent():
     
     addAndMakeVisible(mLargeWaveform);
     addAndMakeVisible(mSmallWaveform);
+    addAndMakeVisible(mDragDropAreaOriginal);
+    addAndMakeVisible(mDragDropAreaResampled);
 
     // read audio file and display waveform
     // /Users/mihaitraista/5.Sound Libraries/fl1.wav
@@ -30,9 +42,11 @@ MainComponent::MainComponent():
     juce::File audioFile = juce::File("/Users/mihaitraista/4.Projects/Coding/JUCE/WebTenori/Resources/ForResampling/Flute-Long.wav");
 
     // this will be updated when the user drags and drops a file
-    mOriginalFileName = "Flute-Long";
+    mOriginalFileName = audioFile.getFileName();
     
-    updateBufferAndRecalculateZeroCrossings(audioFile);
+    pFileHandler->readAudioFileAndCopyToVector(audioFile, mOrigAudioData);
+
+    calculateZeroCrossingsAndUpdateVectors();
 
     addSlidersButtonsAndLabels();
     
@@ -77,7 +91,7 @@ void MainComponent::addSlidersButtonsAndLabels(){
     mCycleLenHintSlider.setSliderStyle(juce::Slider::LinearHorizontal);
     mCycleLenHintSlider.setRange(10, 4000, 1);
     mCycleLenHintSlider.setSkewFactor(0.25);
-    mCycleLenHintSlider.setValue(600);
+    mCycleLenHintSlider.setValue(DEFAULT_CYCLE_LEN_HINT);
     mCycleLenHintSlider.addListener(this);
     addAndMakeVisible(&mCycleLenHintSlider);
 
@@ -267,46 +281,49 @@ void MainComponent::resized()
     float cAreaHeight = 50;
     float width = getWidth();
     float gap = 5;
-    float buttonsYPosition = 50;
+    float buttonsYOffset = 50;
     float bigButtonWidth = 86;
     float bigButtonHeight = 30;
 
     mLargeWaveform.setBounds(0, bAreaY, width, bAreaHeight);
     mSmallWaveform.setBounds(0, cAreaY, width, cAreaHeight);
     
-    mModeOrigButton.setBounds(gap, 50, bigButtonWidth, bigButtonHeight);
-    mModeResampledButton.setBounds(gap + bigButtonWidth + 2, 50, bigButtonWidth, bigButtonHeight);
-    mModeResynthesizedButton.setBounds(gap + bigButtonWidth * 2 + 4, 50, bigButtonWidth, bigButtonHeight);
+    mModeOrigButton.setBounds(gap, buttonsYOffset, bigButtonWidth, bigButtonHeight);
+    mModeResampledButton.setBounds(gap + bigButtonWidth + 2, buttonsYOffset, bigButtonWidth, bigButtonHeight);
+    mModeResynthesizedButton.setBounds(gap + bigButtonWidth * 2 + 4, buttonsYOffset, bigButtonWidth, bigButtonHeight);
     
-    mPrevCycleButton.setBounds(gap, 82, 20, 20);
-    mPrevSampleButton.setBounds(gap + 22, 82, 20, 20);
-    mNextSampleButton.setBounds(gap + 44, 82, 20, 20);
-    mNextCycleButton.setBounds(gap + 66, 82, 20, 20);
+    mPrevCycleButton.setBounds(gap, buttonsYOffset + 32, 20, 20);
+    mPrevSampleButton.setBounds(gap + 22, buttonsYOffset + 32, 20, 20);
+    mNextSampleButton.setBounds(gap + 44, buttonsYOffset + 32, 20, 20);
+    mNextCycleButton.setBounds(gap + 66, buttonsYOffset + 32, 20, 20);
 
     // SLIDERS
-    mBandSliderLabel.setBounds(gap + 140, 105, 100, 10);
-    mBandSlider.setBounds(gap, 110, 262, 20);
-    mCycleLenHintSliderLabel.setBounds(gap + 140, 125, 100, 10);
-    mCycleLenHintSlider.setBounds(gap, 130, 262, 20);
-    mResampledZoomSliderLabel.setBounds(gap + 140, 125, 100, 10);
-    mResampledZoomSlider.setBounds(gap, 130, 262, 20);
+    mBandSliderLabel.setBounds(gap + 140, buttonsYOffset + 55, 100, 10);
+    mBandSlider.setBounds(gap, buttonsYOffset + 60, 262, 20);
+    mCycleLenHintSliderLabel.setBounds(gap + 140, buttonsYOffset + 75, 100, 10);
+    mCycleLenHintSlider.setBounds(gap, buttonsYOffset + 80, 262, 20);
+    mResampledZoomSliderLabel.setBounds(gap + 140, buttonsYOffset + 75, 100, 10);
+    mResampledZoomSlider.setBounds(gap, buttonsYOffset + 80, 262, 20);
 
     // the mStartSampleIndexSlider should overlap mSmallWaveform
     mStartSampleIndexSlider.setBounds(0, cAreaY, width, cAreaHeight);
 
     // Commit, Save, Clear, Delete
-    mCommitButton.setBounds(553, 50, 58, 30);
-    mSaveButton.setBounds(613, 50, 58, 30);
-    mClearButton.setBounds(673, 50, 58, 30);
-    mDeleteButton.setBounds(733, 50, 58, 30);
+    mCommitButton.setBounds(553, buttonsYOffset, 58, 30);
+    mSaveButton.setBounds(613, buttonsYOffset, 58, 30);
+    mClearButton.setBounds(673, buttonsYOffset, 58, 30);
+    mDeleteButton.setBounds(733, buttonsYOffset, 58, 30);
     
-    mCycleLengthComboBox.setBounds(733, 82, 58, 20);
+    mCycleLengthComboBox.setBounds(733, buttonsYOffset + 32, 58, 20);
     
     mEventConfirmationLabel.setBounds(360, bAreaY, width - 300, 16);
     mResampledLengthLabel.setBounds(280, cAreaY - 10, width - 300, 10);
 //    mInstructionsLabel.setBounds(10, 40, getWidth(), getHeight());
-    
-    mPlayButton.setBounds(360, 50, 80, 50);
+
+    mDragDropAreaOriginal.setBounds(553, buttonsYOffset - 45, 116, 40);
+    mDragDropAreaResampled.setBounds(673, buttonsYOffset - 45, 116, 40);
+
+    mPlayButton.setBounds(360, buttonsYOffset, 80, 50);
 }
 
 void MainComponent::sliderValueChanged(juce::Slider* slider)
@@ -400,9 +417,17 @@ void MainComponent::buttonClicked(juce::Button* button){
     } else if (button == &mClearButton){
         mResampledCycles.clear();
         mPolarCycles.clear();
-        mResynthesizedCycles[mSelectedBand].clear();
+
+        for(int i = 0; i < N_WT_BANDS; i++){
+            mResynthesizedCycles[i].clear();
+        }
+
         updateLengthInfoLabel();
         mVectorThatShowsWhichSamplesAreCommitted.assign(mVectorThatShowsWhichSamplesAreCommitted.size(), false);
+        mVectorThatShowsWhichSamplesAreCommitted.clear();
+        
+        mModeOrigButton.setToggleState(true, juce::sendNotification);
+
     } else if (button == &mDeleteButton){
     } else if (button == &mPlayButton){
         bool playButtonState = mPlayButton.getToggleState();
@@ -623,25 +648,28 @@ void MainComponent::updateLengthInfoLabel(){
     mResampledLengthLabel.setText(labelText, juce::dontSendNotification);
 }
 
-void MainComponent::filesDropped (const juce::StringArray& files, int x, int y)
-{
-    std::cout << "filesDropped" << std::endl;
+void MainComponent::calculateZeroCrossingsAndUpdateVectors(){
+    mClosestZeroCrossingStart = 0;
+    mClosestZeroCrossingEnd = 0;
+    mSelectedBand = 0;
+    mStartSampleIndex = 0;
+    mCycleLenHint = DEFAULT_CYCLE_LEN_HINT;
 
-    juce::File audioFile(files[0]);
-    
-    updateBufferAndRecalculateZeroCrossings(audioFile);
-}
+    mZeroCrossings.clear();
+    mVectorThatShowsWhichSamplesAreCommitted.resize(mOrigAudioData.size(), false);
 
-void MainComponent::updateBufferAndRecalculateZeroCrossings(juce::File& audioFile){
-    pFileHandler->readAudioFileAndCopyToVector(audioFile, mOrigAudioData);
+    mResampledCycles.clear();
+    mPolarCycles.clear();
     
+    for(int i = 0; i < N_WT_BANDS; i++){
+        mResynthesizedCycles[i].clear();
+    }
+
     pPlayback->setReadingStart(0);
     pPlayback->setReadingLength(static_cast<int>(mOrigAudioData.size()));
     
     mSmallWaveform.setDisplayLengthInSamples(static_cast<int>(mOrigAudioData.size()));
-    mLargeWaveform.setDisplayLengthInSamples(500);
-
-    mVectorThatShowsWhichSamplesAreCommitted.resize(mOrigAudioData.size(), false);
+    mLargeWaveform.setDisplayLengthInSamples(DEFAULT_CYCLE_LEN_HINT * 2);
     
     pZeroCrossingFinder->calculateZeroCrossings(mOrigAudioData, mZeroCrossings);
 
@@ -653,4 +681,5 @@ void MainComponent::updateBufferAndRecalculateZeroCrossings(juce::File& audioFil
 
     mStartSampleIndexSlider.setRange(0, mOrigAudioData.size() - mCycleLenHint * 2);
     mStartSampleIndexSlider.setValue(mOrigAudioData.size() / 2, juce::sendNotification);
+    mStartSampleIndexSlider.setValue(DEFAULT_CYCLE_LEN_HINT, juce::sendNotification);
 }

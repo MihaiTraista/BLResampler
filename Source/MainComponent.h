@@ -11,9 +11,11 @@
 #include "./Globals/Globals.hpp"
 #include "./Fourier/Fourier.hpp"
 #include "./Playback/Playback.hpp"
+#include "./DragDropArea/DragDropArea.hpp"
+
+#define DEFAULT_CYCLE_LEN_HINT (600)
 
 class MainComponent  :  public juce::AudioAppComponent,
-                        public juce::FileDragAndDropTarget,
                         private juce::Slider::Listener,
                         public juce::Button::Listener,
                         public juce::KeyListener,
@@ -39,11 +41,15 @@ public:
     void resized() override;
     void buttonClicked(juce::Button* button) override;
 
-    inline bool isInterestedInFileDrag (const juce::StringArray& files) override { return true; };
-    void filesDropped (const juce::StringArray& files, int x, int y) override;
-    inline void fileDragEnter (const juce::StringArray& files, int x, int y) override {};
-    inline void fileDragExit (const juce::StringArray& files) override {};
     bool keyPressed(const juce::KeyPress& key, Component* originatingComponent) override;
+
+    // a reference to this function will be sent to the DragDropArea child components
+    inline void newFileWasDropped(){
+        std::cout << "newFileWasDropped message from parent class" << std::endl;
+
+        calculateZeroCrossingsAndUpdateVectors();
+        repaint();
+    }
 
 private:
     void sliderValueChanged(juce::Slider* slider) override;
@@ -52,10 +58,10 @@ private:
     void addSlidersButtonsAndLabels();
     void updateLengthInfoLabel();
     void handleCommitButton();
-    void updateBufferAndRecalculateZeroCrossings(juce::File& audioFile);
-
+    void calculateZeroCrossingsAndUpdateVectors();
+    
     int mStartSampleIndex = 0;
-    int mCycleLenHint = 600;
+    int mCycleLenHint = DEFAULT_CYCLE_LEN_HINT;
     int mClosestZeroCrossingStart = 0;
     int mClosestZeroCrossingEnd = 0;
     int mSelectedBand = 0;
@@ -104,6 +110,9 @@ private:
 
     WaveformDisplay mLargeWaveform;
     WaveformDisplay mSmallWaveform;
+    
+    DragDropArea mDragDropAreaOriginal;
+    DragDropArea mDragDropAreaResampled;
 
     std::unique_ptr<FileHandler> pFileHandler = std::make_unique<FileHandler>();
     std::unique_ptr<Resampler> pResampler = std::make_unique<Resampler>();
