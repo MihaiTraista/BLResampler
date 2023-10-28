@@ -23,8 +23,14 @@ public:
     void resized() override;
     
     inline bool isInterestedInFileDrag (const juce::StringArray& files) override { return true; };
-    inline void fileDragEnter (const juce::StringArray& files, int x, int y) override {};
-    inline void fileDragExit (const juce::StringArray& files) override {};
+    inline void fileDragEnter (const juce::StringArray& files, int x, int y) override {
+        mIsMouseHovering = true;
+        repaint();
+    };
+    inline void fileDragExit (const juce::StringArray& files) override {
+        mIsMouseHovering = false;
+        repaint();
+    };
     inline void fileDragMove (const juce::StringArray& files, int x, int y) override {};
     void filesDropped (const juce::StringArray& files, int x, int y) override;
 
@@ -34,6 +40,8 @@ private:
     juce::String mDisplayString;
     std::vector<float>& mAudioVector;
     juce::String& mFileName;
+    
+    bool mIsMouseHovering = false;
 
     std::unique_ptr<FileHandler> pFileHandler = std::make_unique<FileHandler>();
 
