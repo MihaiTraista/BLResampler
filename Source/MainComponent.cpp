@@ -14,11 +14,15 @@ MainComponent::MainComponent():
     mDragDropAreaOriginal("Original",
                           mOrigAudioData,
                           mOriginalFileName,
-                          std::bind(&MainComponent::newFileWasDropped, this)),
+                          [this](bool isResampled) {
+                              this->newFileWasDropped(isResampled);
+                          }),
     mDragDropAreaResampled("Resampled",
                            mResampledCycles,
                            mOriginalFileName,
-                           std::bind(&MainComponent::newFileWasDropped, this)),
+                           [this](bool isResampled) {
+                               this->newFileWasDropped(isResampled);
+                           }),
 
     pPlayback(std::make_unique<Playback>(&mOrigAudioData, 0, 0))
 {
@@ -161,6 +165,7 @@ void MainComponent::addSlidersButtonsAndLabels(){
     // it will be either "Cycle Committed!" or "File Saved!"
     mEventConfirmationLabel.setText("", juce::dontSendNotification);
     mEventConfirmationLabel.setFont(juce::Font("Arial", "Bold", 16.0f));
+    mEventConfirmationLabel.setJustificationType(juce::Justification::centredTop);
     addAndMakeVisible(mEventConfirmationLabel);
     mEventConfirmationLabel.setVisible(false);
     
@@ -316,7 +321,7 @@ void MainComponent::resized()
     
     mCycleLengthComboBox.setBounds(733, buttonsYOffset + 32, 58, 20);
     
-    mEventConfirmationLabel.setBounds(360, bAreaY, width - 300, 16);
+    mEventConfirmationLabel.setBounds(0, bAreaY, width, 16);
     mResampledLengthLabel.setBounds(280, cAreaY - 10, width - 300, 10);
 //    mInstructionsLabel.setBounds(10, 40, getWidth(), getHeight());
 
@@ -605,12 +610,29 @@ void MainComponent::handleCommitButton(){
 
     // create the three temp vectors
     std::vector<float> resampled = std::vector<float>(WTSIZE, 0.0f);
-    std::vector<float> polarValues = std::vector<float>(WTSIZE * 2, 0.0f);
-    std::vector<float> resynthesized = std::vector<float>(WTSIZE, 0.0f);
 
     pResampler->resizeCycle(origCycle, resampled);
     
-    Fourier::fillDftPolar(resampled, polarValues);
+    mResampledCycles.insert(mResampledCycles.end(), resampled.begin(), resampled.end());
+
+    addResynthesizedCycle(resampled);
+
+    mResampledZoomSlider.setRange(0, mResampledCycles.size() / WTSIZE, 1);
+    mResampledZoomSlider.setMaxValue(mResampledCycles.size() / WTSIZE, juce::dontSendNotification);
+
+    updateLengthInfoLabel();
+
+    mEventConfirmationLabel.setText("Cycle Committed!", juce::dontSendNotification);
+    mEventConfirmationLabel.setVisible(true);
+
+    repaint();
+}
+
+void MainComponent::addResynthesizedCycle(const std::vector<float>& resampledCycle){
+    std::vector<float> polarValues = std::vector<float>(WTSIZE * 2, 0.0f);
+    std::vector<float> resynthesized = std::vector<float>(WTSIZE, 0.0f);
+
+    Fourier::fillDftPolar(resampledCycle, polarValues);
 
     // harmonicsLimit = 512 because Niquist(22050) / freq(43) = 512 (1024 samples is 43 Hz)
 
@@ -622,23 +644,43 @@ void MainComponent::handleCommitButton(){
         mResynthesizedCycles[band].insert(mResynthesizedCycles[band].end(), resynthesized.begin(), resynthesized.end());
     }
 
-//    pFileHandler->saveVectorAsAudioFileToDesktop(resynthesized, "resynthesized-single-cycle");
-    
-//    Fourier::rotateWavetableToNearestZero(resynthesized);
-
-    // append the temp vectors to the member vectors
-    mResampledCycles.insert(mResampledCycles.end(), resampled.begin(), resampled.end());
-
     mPolarCycles.insert(mPolarCycles.end(), polarValues.begin(), polarValues.end());
+}
 
-    mResampledZoomSlider.setRange(0, mResampledCycles.size() / WTSIZE, 1);
-    mResampledZoomSlider.setMaxValue(mResampledCycles.size() / WTSIZE, juce::dontSendNotification);
+void MainComponent::newFileWasDropped(bool isResampled){
+    std::cout << "newFileWasDropped message from parent class - >" << isResampled << std::endl;
 
-    updateLengthInfoLabel();
+    if(isResampled){
+        // clear all vectors, except mResampledCycles which has just been filled by DragDropArea
+        mOrigAudioData.clear();
+        mPolarCycles.clear();
+        for(int i = 0; i < N_WT_BANDS; i++){
+            mResynthesizedCycles[i].clear();
+        }
+        
+        std::vector<float> resampledCycle = std::vector<float>(WTSIZE, 0.0f);
+        
+        size_t nCycles = mResampledCycles.size() / WTSIZE;
 
-    mEventConfirmationLabel.setText("Cycle Committed!", juce::dontSendNotification);
-    mEventConfirmationLabel.setVisible(true);
+        for(int cycleIndex = 0; cycleIndex < nCycles; cycleIndex++){
+            for(int i = 0; i < WTSIZE; i++){
+                resampledCycle[i] = mResampledCycles[cycleIndex * WTSIZE + i];
+            }
+            
+            addResynthesizedCycle(resampledCycle);
+        }
 
+        mResampledZoomSlider.setRange(0, nCycles, 1);
+        mResampledZoomSlider.setMaxValue(nCycles, juce::dontSendNotification);
+
+        updateLengthInfoLabel();
+
+        mEventConfirmationLabel.setText("New Resynthesized Cycles Added!", juce::dontSendNotification);
+        mEventConfirmationLabel.setVisible(true);
+    } else {
+        calculateZeroCrossingsAndUpdateVectors();
+    }
+    
     repaint();
 }
 

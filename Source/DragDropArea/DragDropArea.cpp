@@ -3,7 +3,7 @@
 DragDropArea::DragDropArea(juce::String displayString,
                            std::vector<float>& aV,
                            juce::String& fN,
-                           std::function<void()> newFileWasDroppedReference) :
+                           std::function<void(bool isResampled)> newFileWasDroppedReference) :
     notifyParentThatNewFileWasDropped(newFileWasDroppedReference),
     mDisplayString(displayString),
     mAudioVector(aV),
@@ -26,21 +26,19 @@ void DragDropArea::paint(juce::Graphics& g)
     g.setColour(juce::Colour::fromRGBA(240, 240, 100, 200));
     
     g.drawText(mDisplayString, 0, 21, getWidth(), 16, juce::Justification::centredTop);
-
 }
 
-void DragDropArea::resized()
+void DragDropArea::resized(){}
+
+void DragDropArea::filesDropped (const juce::StringArray& files, int x, int y)
 {
-}
-
-void DragDropArea::filesDropped (const juce::StringArray& files, int x, int y){
     juce::File audioFile(files[0]);
 
     mFileName = audioFile.getFileName();
     
     pFileHandler->readAudioFileAndCopyToVector(audioFile, mAudioVector);
     
-    notifyParentThatNewFileWasDropped();
+    notifyParentThatNewFileWasDropped(mDisplayString == juce::String("Resampled"));
 
     std::cout << "Files Read" << std::endl;
 }

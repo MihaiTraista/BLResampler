@@ -14,7 +14,7 @@ public:
     DragDropArea(juce::String displayString,
                  std::vector<float>& aV,
                  juce::String& fN,
-                 std::function<void()> newFileWasDroppedReference);
+                 std::function<void(bool isResampled)> newFileWasDroppedReference);
     
     ~DragDropArea() override;
 
@@ -29,7 +29,7 @@ public:
     void filesDropped (const juce::StringArray& files, int x, int y) override;
 
 private:
-    std::function<void()> notifyParentThatNewFileWasDropped;
+    std::function<void(bool isResampled)> notifyParentThatNewFileWasDropped;
     
     juce::String mDisplayString;
     std::vector<float>& mAudioVector;

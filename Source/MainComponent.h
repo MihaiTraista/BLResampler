@@ -44,12 +44,7 @@ public:
     bool keyPressed(const juce::KeyPress& key, Component* originatingComponent) override;
 
     // a reference to this function will be sent to the DragDropArea child components
-    inline void newFileWasDropped(){
-        std::cout << "newFileWasDropped message from parent class" << std::endl;
-
-        calculateZeroCrossingsAndUpdateVectors();
-        repaint();
-    }
+    void newFileWasDropped(bool isResampled);
 
 private:
     void sliderValueChanged(juce::Slider* slider) override;
@@ -59,6 +54,7 @@ private:
     void updateLengthInfoLabel();
     void handleCommitButton();
     void calculateZeroCrossingsAndUpdateVectors();
+    void addResynthesizedCycle(const std::vector<float>& resampledCycle);
     
     int mStartSampleIndex = 0;
     int mCycleLenHint = DEFAULT_CYCLE_LEN_HINT;
