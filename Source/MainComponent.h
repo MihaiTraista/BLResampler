@@ -12,6 +12,8 @@
 #include "./Fourier/Fourier.hpp"
 #include "./Playback/Playback.hpp"
 #include "./DragDropArea/DragDropArea.hpp"
+#include "./UI/UI.hpp"
+#include "./EventHandler/EventHandler.hpp"
 
 #define DEFAULT_CYCLE_LEN_HINT (600)
 

@@ -8,6 +8,22 @@
             file="Resources/BLResampler_Title2.png"/>
     </GROUP>
     <GROUP id="{9E17AB2C-4885-DB41-1B2E-9EB4365D5891}" name="Source">
+      <GROUP id="{72E38902-F4EF-BE93-5CD5-2377818349CC}" name="EventHandler">
+        <FILE id="Ka1nOF" name="EventHandler.cpp" compile="1" resource="0"
+              file="Source/EventHandler/EventHandler.cpp"/>
+        <FILE id="sv8bIW" name="EventHandler.hpp" compile="0" resource="0"
+              file="Source/EventHandler/EventHandler.hpp"/>
+      </GROUP>
+      <GROUP id="{8882E7DB-7463-57E0-3F20-AD0BB595EA02}" name="EventInterface">
+        <FILE id="pdTyzU" name="EventInterface.cpp" compile="1" resource="0"
+              file="Source/EventInterface/EventInterface.cpp"/>
+        <FILE id="kmGirb" name="EventInterface.hpp" compile="0" resource="0"
+              file="Source/EventInterface/EventInterface.hpp"/>
+      </GROUP>
+      <GROUP id="{6EE0C362-61F0-2BE5-47BB-69022A691DCE}" name="UI">
+        <FILE id="kKRlcR" name="UI.cpp" compile="1" resource="0" file="Source/UI/UI.cpp"/>
+        <FILE id="Pg0PsK" name="UI.hpp" compile="0" resource="0" file="Source/UI/UI.hpp"/>
+      </GROUP>
       <GROUP id="{084C101D-DF86-4A45-008A-ED0C9BEAF4B3}" name="DragDropArea">
         <FILE id="HhaKT0" name="DragDropArea.cpp" compile="1" resource="0"
               file="Source/DragDropArea/DragDropArea.cpp"/>
