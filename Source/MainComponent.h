@@ -13,10 +13,10 @@
 #include "./Playback/Playback.hpp"
 #include "./DragDropArea/DragDropArea.hpp"
 #include "./UI/UI.hpp"
-#include "./EventHandler/EventHandler.hpp"
 
 class MainComponent  :  public juce::AudioAppComponent,
-                        public juce::KeyListener
+                        public juce::KeyListener,
+                        public EventInterface
 {
 public:
     enum class PlaybackStates{
@@ -41,6 +41,10 @@ public:
 
     // a reference to this function will be sent to the DragDropArea child components
     void newFileWasDropped(bool isResampled);
+    
+    void handleSliderValueChanged(juce::Slider* slider) override;
+    void handleButtonClicked(juce::Button* button) override;
+    void handleComboBoxChanged(juce::ComboBox* box) override;
 
 private:
     void addSlidersButtonsAndLabels();
@@ -72,8 +76,6 @@ private:
     DragDropArea mDragDropAreaResampled;
     
     UI mUI;
-
-    EventHandler mEventHandler;
 
     PlaybackStates mPlaybackState = PlaybackStates::Stopped;
 

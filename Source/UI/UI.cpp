@@ -23,6 +23,7 @@ UI::UI(EventInterface* handler,
     mCycleLenHint(cycleLenHint)
 {
     addSlidersButtonsAndLabels();
+    addIds();
 }
 
 UI::~UI(){}
@@ -44,7 +45,7 @@ void UI::resized()
     float buttonsYOffset = 50;
     float bigButtonWidth = 86;
     float bigButtonHeight = 30;
-
+    
     mModeOrigButton.setBounds(gap, buttonsYOffset, bigButtonWidth, bigButtonHeight);
     mModeResampledButton.setBounds(gap + bigButtonWidth + 2, buttonsYOffset, bigButtonWidth, bigButtonHeight);
     mModeResynthesizedButton.setBounds(gap + bigButtonWidth * 2 + 4, buttonsYOffset, bigButtonWidth, bigButtonHeight);
@@ -253,3 +254,36 @@ void UI::addSlidersButtonsAndLabels(){
     mNextCycleButton.addListener(this);
     addAndMakeVisible(mNextCycleButton);
 }
+
+void UI::addIds() {
+    mStartSampleIndexSlider.setComponentID("mStartSampleIndexSlider");
+    mCycleLenHintSlider.setComponentID("mCycleLenHintSlider");
+    mCycleLenHintSliderLabel.setComponentID("mCycleLenHintSliderLabel");
+    mBandSlider.setComponentID("mBandSlider");
+    mBandSliderLabel.setComponentID("mBandSliderLabel");
+    mResampledZoomSlider.setComponentID("mResampledZoomSlider");
+    mResampledZoomSliderLabel.setComponentID("mResampledZoomSliderLabel");
+
+    mCommitButton.setComponentID("mCommitButton");
+    mSaveButton.setComponentID("mSaveButton");
+    mClearButton.setComponentID("mClearButton");
+    mDeleteButton.setComponentID("mDeleteButton");
+
+    mResampledLengthLabel.setComponentID("mResampledLengthLabel");
+    mEventConfirmationLabel.setComponentID("mEventConfirmationLabel");
+    mInstructionsLabel.setComponentID("mInstructionsLabel");
+    mCycleLengthComboBox.setComponentID("mCycleLengthComboBox");
+    mCycleLengthComboBoxLabel.setComponentID("mCycleLengthComboBoxLabel");
+
+    mPlayButton.setComponentID("mPlayButton");
+
+    mModeOrigButton.setComponentID("mModeOrigButton");
+    mModeResampledButton.setComponentID("mModeResampledButton");
+    mModeResynthesizedButton.setComponentID("mModeResynthesizedButton");
+
+    mPrevCycleButton.setComponentID("mPrevCycleButton");
+    mPrevSampleButton.setComponentID("mPrevSampleButton");
+    mNextSampleButton.setComponentID("mNextSampleButton");
+    mNextCycleButton.setComponentID("mNextCycleButton");
+}
+

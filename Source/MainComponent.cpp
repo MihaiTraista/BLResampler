@@ -24,7 +24,7 @@ MainComponent::MainComponent():
                                this->newFileWasDropped(isResampled);
                            }),
 
-    mUI(&mEventHandler, mOrigAudioData, mResampledCycles, mPolarCycles, mCycleLenHint),
+    mUI(this, mOrigAudioData, mResampledCycles, mPolarCycles, mCycleLenHint),
 
     pPlayback(std::make_unique<Playback>(&mOrigAudioData, 0, 0))
 {
@@ -207,13 +207,9 @@ void MainComponent::handleCommitButton(){
 
     addResynthesizedCycle(resampled);
 
-//    mResampledZoomSlider.setRange(0, mResampledCycles.size() / WTSIZE, 1);
-//    mResampledZoomSlider.setMaxValue(mResampledCycles.size() / WTSIZE, juce::dontSendNotification);
-
+    mUI.setRangeOfResampledZoomSlider(mResampledCycles.size() / WTSIZE);
     updateLengthInfoLabel();
-
-//    mEventConfirmationLabel.setText("Cycle Committed!", juce::dontSendNotification);
-//    mEventConfirmationLabel.setVisible(true);
+    mUI.setEventConfirmationLabelTextAndVisibility("Cycle Committed!", true);
 
     repaint();
 }
@@ -260,13 +256,10 @@ void MainComponent::newFileWasDropped(bool isResampled){
             addResynthesizedCycle(resampledCycle);
         }
 
-//        mResampledZoomSlider.setRange(0, nCycles, 1);
-//        mResampledZoomSlider.setMaxValue(nCycles, juce::dontSendNotification);
-
+        mUI.setRangeOfResampledZoomSlider(nCycles);
         updateLengthInfoLabel();
+        mUI.setEventConfirmationLabelTextAndVisibility("New Resynthesized Cycles Added!", true);
 
-//        mEventConfirmationLabel.setText("New Resynthesized Cycles Added!", juce::dontSendNotification);
-//        mEventConfirmationLabel.setVisible(true);
     } else {
         calculateZeroCrossingsAndUpdateVectors();
     }
@@ -277,7 +270,7 @@ void MainComponent::newFileWasDropped(bool isResampled){
 void MainComponent::updateLengthInfoLabel(){
     int len = static_cast<int>(mResampledCycles.size());
     juce::String labelText = "Resampled Buffer Length: " + juce::String(len) + " samples, " + juce::String(len / static_cast<float>(WTSIZE)) + " cycles";
-//    mResampledLengthLabel.setText(labelText, juce::dontSendNotification);
+    mUI.setTextForResampledLengthLabel(labelText);
 }
 
 void MainComponent::calculateZeroCrossingsAndUpdateVectors(){
@@ -310,8 +303,219 @@ void MainComponent::calculateZeroCrossingsAndUpdateVectors(){
                                                                 mClosestZeroCrossingEnd,
                                                                 mStartSampleIndex,
                                                                 mCycleLenHint);
+    
+    mUI.setRangeOfStartSampleIndexSlider(mOrigAudioData.size() - mCycleLenHint * 2, true);
+}
 
-//    mStartSampleIndexSlider.setRange(0, mOrigAudioData.size() - mCycleLenHint * 2);
-//    mStartSampleIndexSlider.setValue(mOrigAudioData.size() / 2, juce::sendNotification);
-//    mStartSampleIndexSlider.setValue(DEFAULT_CYCLE_LEN_HINT, juce::sendNotification);
+void MainComponent::handleSliderValueChanged(juce::Slider* slider) {
+    juce::String id = slider->getComponentID();
+    if (id == "mStartSampleIndexSlider"){
+        mStartSampleIndex = mUI.getStartSampleIndexSliderValue();
+        mLargeWaveform.setDisplayStartSample(mStartSampleIndex);
+        pZeroCrossingFinder->findClosestZeroCrossingsToCycleLenHint(mZeroCrossings,
+                                                                    mClosestZeroCrossingStart,
+                                                                    mClosestZeroCrossingEnd,
+                                                                    mStartSampleIndex,
+                                                                    mCycleLenHint);
+        mUI.setEventConfirmationLabelTextAndVisibility("hello", false);
+    } else if (id == "mCycleLenHintSlider"){
+        // update the mStartSampleIndex so that we keep the waveform centered while zooming
+
+        int newHint = mUI.getCycleLenHintSliderValue();
+        int diff = newHint - mCycleLenHint;
+        int halfDiff = diff / 2.0f;
+
+        mLargeWaveform.setDisplayLengthInSamples(newHint * 2);
+
+        mUI.setRangeOfStartSampleIndexSlider(mOrigAudioData.size() - newHint * 2, false);
+        
+        // update mCycleLenHint and find new zeroCrossings start and end points
+        mCycleLenHint = mUI.getCycleLenHintSliderValue();
+        
+        pZeroCrossingFinder->findClosestZeroCrossingsToCycleLenHint(mZeroCrossings,
+                                                                    mClosestZeroCrossingStart,
+                                                                    mClosestZeroCrossingEnd,
+                                                                    mStartSampleIndex,
+                                                                    mCycleLenHint);
+
+        mUI.setEventConfirmationLabelTextAndVisibility("hello", false);
+    } else if (id == "mBandSlider"){
+        int band = mUI.getBandSliderValue();
+        
+        mSelectedBand = band;
+        
+        if(mUI.getModeResynthesizedButtonState()){
+            mLargeWaveform.setAudioVector(&mResynthesizedCycles[mSelectedBand],
+                                          mUI.getResampledZoomSliderMin() * WTSIZE,
+                                          mUI.getResampledZoomSliderMax() * WTSIZE,
+                                          false);
+            mLargeWaveform.setAudioVector(&mResynthesizedCycles[mSelectedBand],
+                                          0,
+                                          static_cast<int>(mResynthesizedCycles[mSelectedBand].size()),
+                                          false);
+            pPlayback->setAudioVector(&mResynthesizedCycles[mSelectedBand],
+                                      mUI.getResampledZoomSliderMin() * WTSIZE,
+                                      (mUI.getResampledZoomSliderMax() - mUI.getResampledZoomSliderMin()) * WTSIZE);
+        }
+    } else if (id == "mResampledZoomSlider"){
+        // we don't want to change the display length in ModeOriginal
+        
+        if(mUI.getModeOrigButtonState())
+            return;
+
+        int minVal = mUI.getResampledZoomSliderMin();
+        int maxVal = mUI.getResampledZoomSliderMax();
+        int differenceVal = maxVal - minVal;
+
+        mLargeWaveform.setDisplayStartSample(minVal * WTSIZE);
+        mLargeWaveform.setDisplayLengthInSamples(differenceVal * WTSIZE);
+
+        pPlayback->setReadingStart(minVal * WTSIZE);
+        pPlayback->setReadingLength(differenceVal * WTSIZE);
+    }
+    repaint();
+}
+
+
+void MainComponent::handleButtonClicked(juce::Button* button) {
+//    if (button == &mCommitButton){
+//        handleCommitButton();
+//    } else if (button == &mSaveButton){
+//        pFileHandler->exportFiles(mOrigAudioData,
+//                                  mResampledCycles,
+//                                  mPolarCycles,
+//                                  mResynthesizedCycles,
+//                                  mOriginalFileName);
+//
+//        mEventConfirmationLabel.setText("File Saved!", juce::dontSendNotification);
+//        mEventConfirmationLabel.setVisible(true);
+//    } else if (button == &mClearButton){
+//        mResampledCycles.clear();
+//        mPolarCycles.clear();
+//
+//        for(int i = 0; i < N_WT_BANDS; i++){
+//            mResynthesizedCycles[i].clear();
+//        }
+//
+//        updateLengthInfoLabel();
+//        mVectorThatShowsWhichSamplesAreCommitted.assign(mVectorThatShowsWhichSamplesAreCommitted.size(), false);
+//        mVectorThatShowsWhichSamplesAreCommitted.clear();
+//
+//        mModeOrigButton.setToggleState(true, juce::sendNotification);
+//
+//    } else if (button == &mDeleteButton){
+//    } else if (button == &mPlayButton){
+//        bool playButtonState = mPlayButton.getToggleState();
+//
+//        if(playButtonState){
+//            mPlaybackState = PlaybackStates::Playing;
+//        } else {
+//            mPlaybackState = PlaybackStates::Stopped;
+//        }
+//    } else if(button == &mModeOrigButton){
+//        mModeOrigButton.setToggleState(true, juce::dontSendNotification);
+//        mModeResampledButton.setToggleState(false, juce::dontSendNotification);
+//        mModeResynthesizedButton.setToggleState(false, juce::dontSendNotification);
+//        mLargeWaveform.setAudioVector(&mOrigAudioData,
+//                                      mStartSampleIndex,
+//                                      mCycleLenHint * 2,
+//                                      true);
+//        mSmallWaveform.setAudioVector(&mOrigAudioData,
+//                                      0,
+//                                      static_cast<int>(mOrigAudioData.size()),
+//                                      false);
+//        pPlayback->setAudioVector(&mOrigAudioData, 0, static_cast<int>(mOrigAudioData.size()));
+//
+//        mResampledZoomSlider.setVisible(false);
+//        mResampledZoomSliderLabel.setVisible(false);
+//        mCycleLenHintSlider.setVisible(true);
+//        mCycleLenHintSliderLabel.setVisible(true);
+//        mBandSlider.setVisible(false);
+//        mBandSliderLabel.setVisible(false);
+//        mStartSampleIndexSlider.setVisible(true);
+//
+//        repaint();
+//    } else if(button == &mModeResampledButton){
+//        mModeOrigButton.setToggleState(false, juce::dontSendNotification);
+//        mModeResampledButton.setToggleState(true, juce::dontSendNotification);
+//        mModeResynthesizedButton.setToggleState(false, juce::dontSendNotification);
+//
+//        mLargeWaveform.setAudioVector(&mResampledCycles,
+//                                      mResampledZoomSlider.getMinValue() * WTSIZE,
+//                                      mResampledZoomSlider.getMaxValue() * WTSIZE,
+//                                      false);
+//        mSmallWaveform.setAudioVector(&mResampledCycles,
+//                                      0,
+//                                      static_cast<int>(mResampledCycles.size()),
+//                                      false);
+//
+//        pPlayback->setAudioVector(&mResampledCycles,
+//                                  mResampledZoomSlider.getMinValue() * WTSIZE,
+//                                  (mResampledZoomSlider.getMaxValue() - mResampledZoomSlider.getMinValue()) * WTSIZE);
+//
+//        mResampledZoomSlider.setVisible(true);
+//        mResampledZoomSliderLabel.setVisible(true);
+//        mCycleLenHintSlider.setVisible(false);
+//        mCycleLenHintSliderLabel.setVisible(false);
+//        mBandSlider.setVisible(false);
+//        mBandSliderLabel.setVisible(false);
+//        mStartSampleIndexSlider.setVisible(false);
+//
+//        repaint();
+//    } else if(button == &mModeResynthesizedButton){
+//        mModeOrigButton.setToggleState(false, juce::dontSendNotification);
+//        mModeResampledButton.setToggleState(false, juce::dontSendNotification);
+//        mModeResynthesizedButton.setToggleState(true, juce::dontSendNotification);
+//
+//        mLargeWaveform.setAudioVector(&mResynthesizedCycles[mSelectedBand],
+//                                      mResampledZoomSlider.getMinValue() * WTSIZE,
+//                                      mResampledZoomSlider.getMaxValue() * WTSIZE,
+//                                      false);
+//        mSmallWaveform.setAudioVector(&mResynthesizedCycles[mSelectedBand],
+//                                      0,
+//                                      static_cast<int>(mResynthesizedCycles[mSelectedBand].size()),
+//                                      false);
+//
+//        pPlayback->setAudioVector(&mResynthesizedCycles[mSelectedBand],
+//                                  mResampledZoomSlider.getMinValue() * WTSIZE,
+//                                  (mResampledZoomSlider.getMaxValue() - mResampledZoomSlider.getMinValue()) * WTSIZE);
+//
+//        mResampledZoomSlider.setVisible(true);
+//        mResampledZoomSliderLabel.setVisible(true);
+//        mCycleLenHintSlider.setVisible(false);
+//        mCycleLenHintSliderLabel.setVisible(false);
+//        mBandSlider.setVisible(true);
+//        mBandSliderLabel.setVisible(true);
+//        mStartSampleIndexSlider.setVisible(false);
+//
+//        repaint();
+//    } else if(button == &mPrevCycleButton){
+//        int cycleLen = mClosestZeroCrossingEnd - mClosestZeroCrossingStart;
+//        int newVal = mStartSampleIndexSlider.getValue() - cycleLen;
+//        if(newVal < 0)
+//            newVal = 0;
+//        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+//    } else if(button == &mPrevSampleButton){
+//        int newVal = mStartSampleIndexSlider.getValue() - 2;
+//        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+//    } else if(button == &mNextSampleButton){
+//        int newVal = mStartSampleIndexSlider.getValue() + 2;
+//        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+//    } else if(button == &mNextCycleButton){
+//        int cycleLen = mClosestZeroCrossingEnd - mClosestZeroCrossingStart;
+//        int newVal = mStartSampleIndexSlider.getValue() + cycleLen;
+//        if(newVal > mOrigAudioData.size() - cycleLen)
+//            newVal = static_cast<int>(mOrigAudioData.size()) - cycleLen;
+//        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+//    }
+}
+
+
+void MainComponent::handleComboBoxChanged(juce::ComboBox* box) {
+//    if (box == &mCycleLengthComboBox)
+//    {
+//        int newValue = box->getText().getIntValue();
+//        std::cout << "New WTSIZE = " << newValue << std::endl;
+//        WTSIZE = newValue;
+//    }
 }

@@ -36,12 +36,45 @@ public:
     
     inline void buttonClicked(juce::Button* button) override {};
 
+    inline void setRangeOfStartSampleIndexSlider(int newRange, bool shouldGetValueToHalfTheRange){
+        mStartSampleIndexSlider.setRange(0, newRange);
+        if(shouldGetValueToHalfTheRange)
+            mStartSampleIndexSlider.setValue(newRange / 2, juce::sendNotification);
+    };
+    
+    inline void setTextForResampledLengthLabel(juce::String newText){
+        mResampledLengthLabel.setText(newText, juce::dontSendNotification);
+    };
+    
+    inline void setRangeOfResampledZoomSlider(int newMaxValue) {
+        mResampledZoomSlider.setRange(0, newMaxValue, 1);
+        mResampledZoomSlider.setMaxValue(newMaxValue, juce::dontSendNotification);
+    };
+
+    inline void setEventConfirmationLabelTextAndVisibility(const juce::String& newText, bool isVisible) {
+        mEventConfirmationLabel.setText(newText, juce::dontSendNotification);
+        mEventConfirmationLabel.setVisible(isVisible);
+    };
+    
+    inline int getStartSampleIndexSliderValue(){ return mStartSampleIndexSlider.getValue(); };
+    inline int getCycleLenHintSliderValue(){ return mCycleLenHintSlider.getValue(); };
+    inline int getBandSliderValue(){ return mBandSlider.getValue(); };
+    inline bool getModeResynthesizedButtonState(){ return mModeResynthesizedButton.getToggleState(); };
+    inline bool getModeOrigButtonState(){ return mModeOrigButton.getToggleState(); };
+    inline bool getModeResampledButtonState(){ return mModeResampledButton.getToggleState(); };
+    inline int getResampledZoomSliderMin(){ return mResampledZoomSlider.getMinValue(); };
+    inline int getResampledZoomSliderMax(){ return mResampledZoomSlider.getMaxValue(); };
 
 private:
-    inline void sliderValueChanged(juce::Slider* slider) override {};
+    inline void sliderValueChanged(juce::Slider* slider) override {
+        mEventHandler->handleSliderValueChanged(slider);
+    };
+    
     inline void comboBoxChanged(juce::ComboBox* box) override {};
     
     void addSlidersButtonsAndLabels();
+    
+    void addIds();
     
     EventInterface* mEventHandler = nullptr;
 
