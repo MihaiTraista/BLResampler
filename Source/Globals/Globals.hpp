@@ -15,5 +15,7 @@ extern float WTSIZE_OVER_SAMPLE_RATE;
 #define BASE_FREQ_FOR_BLW (25)
 #define N_STACK_LAYERS (4)
 
+#define DEFAULT_CYCLE_LEN_HINT (600)
+
 // 10 times 25.0 * pow(2, i)
 const float baseFrequencies[10] = {25.0, 50.0, 100.0, 200.0, 400.0, 800.0, 1600.0, 3200.0, 6400.0, 12800.0};

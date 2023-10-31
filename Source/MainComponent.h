@@ -15,13 +15,8 @@
 #include "./UI/UI.hpp"
 #include "./EventHandler/EventHandler.hpp"
 
-#define DEFAULT_CYCLE_LEN_HINT (600)
-
 class MainComponent  :  public juce::AudioAppComponent,
-                        private juce::Slider::Listener,
-                        public juce::Button::Listener,
-                        public juce::KeyListener,
-                        private juce::ComboBox::Listener
+                        public juce::KeyListener
 {
 public:
     enum class PlaybackStates{
@@ -41,7 +36,6 @@ public:
     //==============================================================================
     void paint (juce::Graphics& g) override;
     void resized() override;
-    void buttonClicked(juce::Button* button) override;
 
     bool keyPressed(const juce::KeyPress& key, Component* originatingComponent) override;
 
@@ -49,9 +43,6 @@ public:
     void newFileWasDropped(bool isResampled);
 
 private:
-    void sliderValueChanged(juce::Slider* slider) override;
-    void comboBoxChanged(juce::ComboBox* box) override;
-    
     void addSlidersButtonsAndLabels();
     void updateLengthInfoLabel();
     void handleCommitButton();
@@ -74,43 +65,17 @@ private:
     
     juce::String mOriginalFileName;
     
-    PlaybackStates mPlaybackState = PlaybackStates::Stopped;
-
-    juce::Slider mStartSampleIndexSlider;
-    juce::Slider mCycleLenHintSlider;
-    juce::Label mCycleLenHintSliderLabel;
-    juce::Slider mBandSlider;
-    juce::Label mBandSliderLabel;
-    juce::Slider mResampledZoomSlider;
-    juce::Label mResampledZoomSliderLabel;
-
-    juce::TextButton mCommitButton;
-    juce::TextButton mSaveButton;
-    juce::TextButton mClearButton;
-    juce::TextButton mDeleteButton;
-
-    juce::Label mResampledLengthLabel;
-    juce::Label mEventConfirmationLabel;
-    juce::Label mInstructionsLabel;
-    juce::ComboBox mCycleLengthComboBox;
-    juce::Label mCycleLengthComboBoxLabel;
-
-    juce::TextButton mPlayButton;
-
-    juce::TextButton mModeOrigButton;
-    juce::TextButton mModeResampledButton;
-    juce::TextButton mModeResynthesizedButton;
-
-    juce::TextButton mPrevCycleButton;
-    juce::TextButton mPrevSampleButton;
-    juce::TextButton mNextSampleButton;
-    juce::TextButton mNextCycleButton;
-
     WaveformDisplay mLargeWaveform;
     WaveformDisplay mSmallWaveform;
     
     DragDropArea mDragDropAreaOriginal;
     DragDropArea mDragDropAreaResampled;
+    
+    UI mUI;
+
+    EventHandler mEventHandler;
+
+    PlaybackStates mPlaybackState = PlaybackStates::Stopped;
 
     std::unique_ptr<FileHandler> pFileHandler = std::make_unique<FileHandler>();
     std::unique_ptr<Resampler> pResampler = std::make_unique<Resampler>();
