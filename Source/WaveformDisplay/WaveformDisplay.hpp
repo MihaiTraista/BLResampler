@@ -16,14 +16,14 @@
 class WaveformDisplay : public juce::Component
 {
 public:
-    WaveformDisplay(std::vector<float>* pAudioVector,
-                    std::vector<bool>* zeroCrossings,
-                    std::vector<bool>* vectorThatShowsWhichSamplesAreCommitted,
+    WaveformDisplay(const std::vector<float>& audioVector,
+                    const std::vector<bool>& zeroCrossings,
+                    const std::vector<bool>& vectorThatShowsWhichSamplesAreCommitted,
+                    const int& closestZeroCrossingStartPointer,
+                    const int& closestZeroCrossingEndPointer,
                     int displayStartSample,
-                    int displayLengthInSamples,
-                    int* closestZeroCrossingStartPointer,
-                    int* closestZeroCrossingEndPointer);
-    WaveformDisplay(std::vector<float>* pAudioVector,
+                    int displayLengthInSamples);
+    WaveformDisplay(const std::vector<float>& audioVector,
                     int displayStartSample,
                     int displayLengthInSamples);
 
@@ -31,11 +31,11 @@ public:
 
     void paint(juce::Graphics&) override;
     
-    inline void setAudioVector(std::vector<float>* pAV,
+    inline void setAudioVector(const std::vector<float>& mAV,
                                int displayStartSample,
                                int displayLengthInSamples,
                                bool showZeroCrossings){
-        pAudioVector = pAV;
+        pAudioVector = &mAV;
         mDisplayStartSample = displayStartSample;
         mDisplayLengthInSamples = displayLengthInSamples;
         mShowZeroCrossings = showZeroCrossings;
@@ -64,14 +64,14 @@ private:
                                              const float* bufferToDraw);
     void drawTeardropShape(juce::Graphics& g, int x, int y, int width, int height, bool centered, bool reversed);
 
-    std::vector<float>* pAudioVector = nullptr;
-    std::vector<bool>* pZeroCrossings = nullptr;
-    std::vector<bool>* pVectorThatShowsWhichSamplesAreCommitted = nullptr;
+    const std::vector<float>* pAudioVector = nullptr;
+    const std::vector<bool>* pZeroCrossings = nullptr;
+    const std::vector<bool>* pVectorThatShowsWhichSamplesAreCommitted = nullptr;
+    const int* pClosestZeroCrossingStart = nullptr;
+    const int* pClosestZeroCrossingEnd = nullptr;
 
     int mDisplayStartSample = 0;
     int mDisplayLengthInSamples = 500;
-    int* pClosestZeroCrossingStart = nullptr;
-    int* pClosestZeroCrossingEnd = nullptr;
 
     bool mShowZeroCrossings = false;
 

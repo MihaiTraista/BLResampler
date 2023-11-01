@@ -11,18 +11,12 @@
 #include "UI.hpp"
 
 UI::UI(EventInterface* handler,
-       std::vector<float>& origAudioData,
-       std::vector<float>& resampledCycles,
-       std::vector<float>& polarCycles,
-       int& cycleLenHint)
+       int sizeOfOrigAudioData,
+       int cycleLenHint)
 :
-    mEventHandler(handler),
-    mOrigAudioData(origAudioData),
-    mResampledCycles(resampledCycles),
-    mPolarCycles(polarCycles),
-    mCycleLenHint(cycleLenHint)
+    mEventHandler(handler)
 {
-    addSlidersButtonsAndLabels();
+    addSlidersButtonsAndLabels(sizeOfOrigAudioData, cycleLenHint);
     addIds();
 }
 
@@ -81,13 +75,13 @@ void UI::resized()
     mPlayButton.setBounds(360, buttonsYOffset, 80, 50);
 }
 
-void UI::addSlidersButtonsAndLabels(){
+void UI::addSlidersButtonsAndLabels(int sizeOfOrigAudioData, int cycleLenHint){
     // Start Sample Index Slider and Label
     mStartSampleIndexSlider.setSliderStyle(juce::Slider::LinearBar);
     // the audio file is already loaded, so we can set the range to the length of the file
-    if(mOrigAudioData.size() > 0){
-        mStartSampleIndexSlider.setRange(0, mOrigAudioData.size() - mCycleLenHint * 2);
-        mStartSampleIndexSlider.setValue(mOrigAudioData.size() / 2, juce::sendNotification);
+    if(sizeOfOrigAudioData > 0){
+        mStartSampleIndexSlider.setRange(0, sizeOfOrigAudioData - cycleLenHint * 2);
+        mStartSampleIndexSlider.setValue(sizeOfOrigAudioData / 2, juce::sendNotification);
     } else {
         mStartSampleIndexSlider.setRange(0, 1, 1);
         mStartSampleIndexSlider.setValue(0);

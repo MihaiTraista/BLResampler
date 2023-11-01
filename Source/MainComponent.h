@@ -13,6 +13,7 @@
 #include "./Playback/Playback.hpp"
 #include "./DragDropArea/DragDropArea.hpp"
 #include "./UI/UI.hpp"
+#include "./DataModel/DataModel.hpp"
 
 class MainComponent  :  public juce::AudioAppComponent,
                         public juce::KeyListener,
@@ -50,33 +51,18 @@ private:
     void addSlidersButtonsAndLabels();
     void updateLengthInfoLabel();
     void handleCommitButton();
-    void calculateZeroCrossingsAndUpdateVectors();
+    void updateVectors();
     void addResynthesizedCycle(const std::vector<float>& resampledCycle);
     
-    int mStartSampleIndex = 0;
-    int mCycleLenHint = DEFAULT_CYCLE_LEN_HINT;
-    int mClosestZeroCrossingStart = 0;
-    int mClosestZeroCrossingEnd = 0;
-    int mSelectedBand = 0;
+    DataModel mDataModel;
 
-    std::vector<bool> mZeroCrossings;
-    std::vector<bool> mVectorThatShowsWhichSamplesAreCommitted;
-
-    std::vector<float> mOrigAudioData;
-    std::vector<float> mResampledCycles;
-    std::vector<float> mPolarCycles;
-    std::array<std::vector<float>, N_WT_BANDS> mResynthesizedCycles;
-    
-    juce::String mOriginalFileName;
-    
     WaveformDisplay mLargeWaveform;
     WaveformDisplay mSmallWaveform;
     
-    DragDropArea mDragDropAreaOriginal;
-    DragDropArea mDragDropAreaResampled;
-    
     UI mUI;
-
+//    DragDropArea mDragDropAreaOriginal;
+//    DragDropArea mDragDropAreaResampled;
+    
     PlaybackStates mPlaybackState = PlaybackStates::Stopped;
 
     std::unique_ptr<FileHandler> pFileHandler = std::make_unique<FileHandler>();

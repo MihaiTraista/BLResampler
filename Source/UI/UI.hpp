@@ -24,10 +24,9 @@ class UI :  public juce::Component,
 {
 public:
     UI(EventInterface* handler,
-       std::vector<float>& origAudioData,
-       std::vector<float>& resampledCycles,
-       std::vector<float>& polarCycles,
-       int& cycleLenHint);
+       int sizeOfOrigAudioData,
+       int cycleLenHint);
+
     ~UI() override;
 
     void paint(juce::Graphics&) override;
@@ -72,17 +71,11 @@ private:
     
     inline void comboBoxChanged(juce::ComboBox* box) override {};
     
-    void addSlidersButtonsAndLabels();
+    void addSlidersButtonsAndLabels(int sizeOfOrigAudioData, int cycleLenHint);
     
     void addIds();
     
     EventInterface* mEventHandler = nullptr;
-
-    std::vector<float>& mOrigAudioData;
-    std::vector<float>& mResampledCycles;
-    std::vector<float>& mPolarCycles;
-    
-    int& mCycleLenHint;
 
     juce::Slider mStartSampleIndexSlider;
     juce::Slider mCycleLenHintSlider;

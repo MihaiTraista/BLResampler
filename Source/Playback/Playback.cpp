@@ -1,7 +1,7 @@
 #include "Playback.hpp"
 
-Playback::Playback(const std::vector<float>* pAV, int start, int length):
-    pAudioVector(pAV),
+Playback::Playback(const std::vector<float>& av, int start, int length):
+    pAudioVector(&av),
     mReadingStart(start),
     mReadingLength(length)
 {}

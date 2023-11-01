@@ -10,30 +10,27 @@
 
 #include "WaveformDisplay.hpp"
 
-WaveformDisplay::WaveformDisplay(std::vector<float>* audioVector,
-                                 std::vector<bool>* zeroCrossings,
-                                 std::vector<bool>* vectorThatShowsWhichSamplesAreCommitted,
+WaveformDisplay::WaveformDisplay(const std::vector<float>& audioVector,
+                                 const std::vector<bool>& zeroCrossings,
+                                 const std::vector<bool>& vectorThatShowsWhichSamplesAreCommitted,
+                                 const int& closestZeroCrossingStartPointer,
+                                 const int& closestZeroCrossingEndPointer,
                                  int displayStartSample,
-                                 int displayLengthInSamples,
-                                 int* closestZeroCrossingStartPointer,
-                                 int* closestZeroCrossingEndPointer):
-    pAudioVector(audioVector),
-    pZeroCrossings(zeroCrossings),
-    pVectorThatShowsWhichSamplesAreCommitted(vectorThatShowsWhichSamplesAreCommitted),
+                                 int displayLengthInSamples):
+    pAudioVector(&audioVector),
+    pZeroCrossings(&zeroCrossings),
+    pVectorThatShowsWhichSamplesAreCommitted(&vectorThatShowsWhichSamplesAreCommitted),
+    pClosestZeroCrossingStart(&closestZeroCrossingStartPointer),
+    pClosestZeroCrossingEnd(&closestZeroCrossingEndPointer),
     mDisplayStartSample(displayStartSample),
     mDisplayLengthInSamples(displayLengthInSamples),
-    pClosestZeroCrossingStart(closestZeroCrossingStartPointer),
-    pClosestZeroCrossingEnd(closestZeroCrossingEndPointer),
     mShowZeroCrossings(true)
 {}
 
-
-
-
-WaveformDisplay::WaveformDisplay(std::vector<float>* audioVector,
+WaveformDisplay::WaveformDisplay(const std::vector<float>& audioVector,
                                  int displayStartSample,
                                  int displayLengthInSamples):
-    pAudioVector(audioVector),
+    pAudioVector(&audioVector),
     mDisplayStartSample(displayStartSample),
     mDisplayLengthInSamples(displayLengthInSamples),
     mShowZeroCrossings(false)
@@ -47,6 +44,10 @@ void WaveformDisplay::paint(juce::Graphics& g)
 {
     if (pAudioVector->size() < 2 || mDisplayLengthInSamples < 2)
         return;
+    
+    for(int i = 0; i < 20; i++){
+        std::cout << "av in waveform " << pAudioVector->size() << ", " << (*pAudioVector)[i + 1000] << std::endl;
+    }
     
     g.fillAll(juce::Colour::fromRGB(10, 10, 20));
 
@@ -122,7 +123,7 @@ void WaveformDisplay::drawWaveformSampleBySample(juce::Graphics& g,
         float topCoordinate = sampleValue >= 0.0f ? (1.0f - (sampleValue * 0.5f + 0.5f)) * height : height / 2.0f;
         float bottomCoordinate = sampleValue >= 0.0f ? height / 2.0f : (1.0f - (sampleValue * 0.5f + 0.5f)) * height;
         
-        if (pVectorThatShowsWhichSamplesAreCommitted && (*pVectorThatShowsWhichSamplesAreCommitted)[sampleIndex]){
+        if ((*pVectorThatShowsWhichSamplesAreCommitted)[sampleIndex]){
             g.setColour(juce::Colour::fromRGB(120, 120, 110));
         } else {
             g.setColour(juce::Colour::fromRGB(220, 220, 200));
@@ -151,13 +152,13 @@ void WaveformDisplay::drawZeroCrossingCirclesAndHintLines(juce::Graphics& g,
             g.setColour(juce::Colour::fromRGB(10, 180, 255));
             g.fillEllipse(x - 2, height / 2.0f - 2, 4, 4);
 
-            if(*pClosestZeroCrossingStart == index)
+            if((*pClosestZeroCrossingStart) == index)
             {
                 g.setColour(juce::Colour::fromRGB(255, 200, 0));
                 g.drawEllipse(x - 11, height / 2.0f - 11, 22, 22, 1);
                 g.drawEllipse(x - 8, height / 2.0f - 8, 16, 16, 1);
             }
-            else if(*pClosestZeroCrossingEnd == index)
+            else if((*pClosestZeroCrossingEnd) == index)
             {
                 g.setColour(juce::Colour::fromRGB(255, 0, 0));
                 g.drawEllipse(x - 11, height / 2.0f - 11, 22, 22, 1);
