@@ -16,6 +16,7 @@
 #include "../WaveformDisplay/WaveformDisplay.hpp"
 #include "../EventInterface/EventInterface.hpp"
 #include "../Globals/Globals.hpp"
+#include "../DragDropArea/DragDropArea.hpp"
 
 class UI :  public juce::Component,
             private juce::Slider::Listener,
@@ -36,7 +37,8 @@ public:
        const int& closestZeroCrossingStartPointer,
        const int& closestZeroCrossingEndPointer,
        int sizeOfOrigAudioData,
-       int cycleLenHint);
+       int cycleLenHint,
+       std::function<void(juce::File, bool)> newFileWasDroppedReference);
 
     ~UI() override;
 
@@ -88,6 +90,9 @@ public:
     inline void setLargeWaveformStart(int val){ mLargeWaveform.setDisplayStartSample(val); };
     inline void setSmallWaveformLength(int val){ mSmallWaveform.setDisplayLengthInSamples(val); };
     inline void setLargeWaveformLength(int val){ mLargeWaveform.setDisplayLengthInSamples(val); };
+    inline void setStartSampleIndexSlider(int val){
+        mStartSampleIndexSlider.setValue(val, juce::sendNotification);
+    };
 
     void setMode(Modes mode);
 
@@ -121,7 +126,9 @@ public:
     inline void triggerClickNextCycleButton(){ mNextCycleButton.triggerClick(); };
     inline void triggerClickPrevSampleButton(){ mPrevSampleButton.triggerClick(); };
     inline void triggerClickNextSampleButton(){ mNextSampleButton.triggerClick(); };
-    
+    inline void triggerClickModeResampled(){ mModeResampledButton.triggerClick(); };
+    inline void triggerClickModeOrig(){ mModeOrigButton.triggerClick(); };
+
     // ZOOM
     inline void zoomOutOneUnit(){
         int newVal = mCycleLenHintSlider.getValue() - 4;
@@ -143,6 +150,7 @@ public:
     inline int getResampledZoomSliderMin(){ return mResampledZoomSlider.getMinValue(); };
     inline int getResampledZoomSliderMax(){ return mResampledZoomSlider.getMaxValue(); };
     inline bool getPlayButtonToggleState(){ return mPlayButton.getToggleState(); };
+    inline int getLargeWaveformStartSampleIndex(){ return mLargeWaveform.getDisplayStartSample(); };
     inline Modes getMode(){ return mMode; };
 
 private:
@@ -154,7 +162,7 @@ private:
     inline void comboBoxChanged(juce::ComboBox* box) override {
         mEventHandler->handleComboBoxChanged(box);
     };
-    
+        
     // OTHER PRIVATE METHODS
     void addSlidersButtonsAndLabels(int sizeOfOrigAudioData, int cycleLenHint);
     void addIds();
@@ -164,6 +172,9 @@ private:
     
     WaveformDisplay mLargeWaveform;
     WaveformDisplay mSmallWaveform;
+    
+    DragDropArea mDragDropAreaOriginal;
+    DragDropArea mDragDropAreaResampled;
 
     juce::Slider mStartSampleIndexSlider;
     juce::Slider mCycleLenHintSlider;

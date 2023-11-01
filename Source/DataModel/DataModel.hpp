@@ -31,6 +31,7 @@ public:
     inline void setStartSampleIndex(int value) { mStartSampleIndex = value; };
     inline void setCycleLenHint(int newHint){ mCycleLenHint = newHint; };
     inline void setSelectedBand(int val){ mSelectedBand = val; };
+    inline void setOrigFileName(juce::String newName){ mOriginalFileName = newName; };
 
     //  GETTERS
     inline const std::vector<float>& getReferenceForOrigAudioDataVector() { return mOrigAudioData; };
@@ -52,13 +53,38 @@ public:
     inline int getCycleLenHint(){ return mCycleLenHint; };
 
     //  OTHER METHODS
-    inline void readAudioFileAndCopyToVector(juce::String filePath){
-        juce::File audioFile = juce::File(filePath);
-
+    inline void readFileAndStoreDataInOrigAudioData(juce::File audioFile){
         mOriginalFileName = audioFile.getFileName();
         
         pFileHandler->readAudioFileAndCopyToVector(audioFile, mOrigAudioData);
-    }
+    };
+
+    inline void readFileAndStoreDataInResampledCycles(juce::File audioFile){
+        pFileHandler->readAudioFileAndCopyToVector(audioFile, mResampledCycles);
+    };
+    
+    inline int clearVectorsAndResynthesizeAllCycles(){
+        // clear
+        mOrigAudioData.clear();
+        mPolarCycles.clear();
+        for(int i = 0; i < N_WT_BANDS; i++){
+            mResynthesizedCycles[i].clear();
+        }
+
+        std::vector<float> resampledCycle = std::vector<float>(WTSIZE, 0.0f);
+
+        size_t nCycles = mResampledCycles.size() / WTSIZE;
+
+        for(int cycleIndex = 0; cycleIndex < nCycles; cycleIndex++){
+            for(int i = 0; i < WTSIZE; i++){
+                resampledCycle[i] = mResampledCycles[cycleIndex * WTSIZE + i];
+            }
+
+            performDFTandAppendResynthesizedCycleForAllBands(resampledCycle);
+        }
+
+        return static_cast<int>(nCycles);
+    };
 
     void calculateZeroCrossingsAndUpdateVectors();
     
@@ -68,11 +94,10 @@ public:
                                                                     mClosestZeroCrossingEnd,
                                                                     mStartSampleIndex,
                                                                     mCycleLenHint);
-
     };
     
     void commit();
-    void addResynthesizedCycle(const std::vector<float>& resampledCycle);
+    void performDFTandAppendResynthesizedCycleForAllBands(const std::vector<float>& resampledCycle);
 
 private:
     int mStartSampleIndex = 0;

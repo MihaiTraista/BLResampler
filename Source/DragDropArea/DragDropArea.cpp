@@ -1,13 +1,9 @@
 #include "DragDropArea.hpp"
 
 DragDropArea::DragDropArea(juce::String displayString,
-                           std::vector<float>& aV,
-                           juce::String& fN,
-                           std::function<void(bool isResampled)> newFileWasDroppedReference) :
+                           std::function<void(juce::File, bool)> newFileWasDroppedReference) :
     notifyParentThatNewFileWasDropped(newFileWasDroppedReference),
-    mDisplayString(displayString),
-    mAudioVector(aV),
-    mFileName(fN)
+    mDisplayString(displayString)
 {}
 
 DragDropArea::~DragDropArea(){}
@@ -41,11 +37,5 @@ void DragDropArea::filesDropped (const juce::StringArray& files, int x, int y)
 
     juce::File audioFile(files[0]);
 
-    mFileName = audioFile.getFileName();
-    
-    pFileHandler->readAudioFileAndCopyToVector(audioFile, mAudioVector);
-    
-    notifyParentThatNewFileWasDropped(mDisplayString == juce::String("Resampled"));
-
-    std::cout << "Files Read" << std::endl;
+    notifyParentThatNewFileWasDropped(audioFile, mDisplayString == juce::String("Resampled"));
 }

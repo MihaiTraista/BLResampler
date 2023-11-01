@@ -41,7 +41,7 @@ public:
     bool keyPressed(const juce::KeyPress& key, Component* originatingComponent) override;
 
     // a reference to this function will be sent to the DragDropArea child components
-    void newFileWasDropped(bool isResampled);
+    void newFileWasDropped(juce::File audioFile, bool isResampled);
     
     void handleSliderValueChanged(juce::Slider* slider) override;
     void handleButtonClicked(juce::Button* button) override;
@@ -56,8 +56,6 @@ private:
     DataModel mDataModel;
 
     UI mUI;
-//    DragDropArea mDragDropAreaOriginal;
-//    DragDropArea mDragDropAreaResampled;
     
     PlaybackStates mPlaybackState = PlaybackStates::Stopped;
 

@@ -17,7 +17,8 @@ UI::UI(EventInterface* handler,
        const int& closestZeroCrossingStartPointer,
        const int& closestZeroCrossingEndPointer,
        int sizeOfOrigAudioData,
-       int cycleLenHint)
+       int cycleLenHint,
+       std::function<void(juce::File, bool)> newFileWasDroppedReference)
 :
     mEventHandler(handler),
     mLargeWaveform(audioVector,
@@ -27,10 +28,16 @@ UI::UI(EventInterface* handler,
                    closestZeroCrossingEndPointer,
                    0,
                    500),
-    mSmallWaveform(audioVector, 0, 0)
+    mSmallWaveform(audioVector, 0, 0),
+    mDragDropAreaOriginal("Original", newFileWasDroppedReference),
+    mDragDropAreaResampled("Resampled", newFileWasDroppedReference)
 {
     addAndMakeVisible(mLargeWaveform);
     addAndMakeVisible(mSmallWaveform);
+
+    addAndMakeVisible(mDragDropAreaOriginal);
+    addAndMakeVisible(mDragDropAreaResampled);
+
     addSlidersButtonsAndLabels(sizeOfOrigAudioData, cycleLenHint);
     addIds();
 }
@@ -149,6 +156,9 @@ void UI::resized()
 //    mInstructionsLabel.setBounds(10, 40, getWidth(), getHeight());
 
     mPlayButton.setBounds(360, buttonsYOffset, 80, 50);
+    
+    mDragDropAreaOriginal.setBounds(553, buttonsYOffset - 45, 116, 40);
+    mDragDropAreaResampled.setBounds(673, buttonsYOffset - 45, 116, 40);
 }
 
 void UI::addSlidersButtonsAndLabels(int sizeOfOrigAudioData, int cycleLenHint){

@@ -5,21 +5,17 @@
 #include <vector>
 #include <memory>
 
-#include "../FileHandler/FileHandler.hpp"
-
 class DragDropArea :    public juce::Component,
                         public juce::FileDragAndDropTarget
 {
 public:
     DragDropArea(juce::String displayString,
-                 std::vector<float>& aV,
-                 juce::String& fN,
-                 std::function<void(bool isResampled)> newFileWasDroppedReference);
+                 std::function<void(juce::File, bool)> newFileWasDroppedReference);
     
     ~DragDropArea() override;
 
     void paint(juce::Graphics&) override;
-    
+
     void resized() override;
     
     inline bool isInterestedInFileDrag (const juce::StringArray& files) override { return true; };
@@ -35,15 +31,15 @@ public:
     void filesDropped (const juce::StringArray& files, int x, int y) override;
 
 private:
-    std::function<void(bool isResampled)> notifyParentThatNewFileWasDropped;
+    std::function<void(juce::File, bool)> notifyParentThatNewFileWasDropped;
     
     juce::String mDisplayString;
-    std::vector<float>& mAudioVector;
-    juce::String& mFileName;
+
+//    juce::String mFileName = "";
     
     bool mIsMouseHovering = false;
 
-    std::unique_ptr<FileHandler> pFileHandler = std::make_unique<FileHandler>();
+//    std::unique_ptr<FileHandler> pFileHandler = std::make_unique<FileHandler>();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DragDropArea)
 };

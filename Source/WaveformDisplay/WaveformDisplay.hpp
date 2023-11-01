@@ -43,7 +43,9 @@ public:
 
     inline void setDisplayStartSample(int val){ mDisplayStartSample = val; };
     inline void setDisplayLengthInSamples(int val){ mDisplayLengthInSamples = val; };
-    
+    inline int getDisplayStartSample(){ return mDisplayStartSample; };
+    inline int getDisplayLengthInSamples(){ return mDisplayLengthInSamples; };
+
     void resized() override;
 
 private:

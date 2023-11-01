@@ -2,20 +2,6 @@
 
 //==============================================================================
 MainComponent::MainComponent():
-
-//    mDragDropAreaOriginal("Original",
-//                          mOrigAudioData,
-//                          mOriginalFileName,
-//                          [this](bool isResampled) {
-//                              this->newFileWasDropped(isResampled);
-//                          }),
-//    mDragDropAreaResampled("Resampled",
-//                           mResampledCycles,
-//                           mOriginalFileName,
-//                           [this](bool isResampled) {
-//                               this->newFileWasDropped(isResampled);
-//                           }),
-
     mUI(this,
         mDataModel.getReferenceForOrigAudioDataVector(),
         mDataModel.getReferenceForZeroCrossingsVector(),
@@ -23,7 +9,10 @@ MainComponent::MainComponent():
         mDataModel.getReferenceOfClosestZeroCrossingStart(),
         mDataModel.getReferenceOfClosestZeroCrossingEnd(),
         mDataModel.getSizeOfOrigAudioData(),
-        mDataModel.getCycleLenHint()),
+        mDataModel.getCycleLenHint(),
+        [this](juce::File audioFile, bool isResampled) {
+            this->newFileWasDropped(audioFile, isResampled);
+        }),
 
     pPlayback(std::make_unique<Playback>(mDataModel.getReferenceForOrigAudioDataVector(), 0, 0))
 {
@@ -40,13 +29,12 @@ MainComponent::MainComponent():
     // /Users/mihaitraista/4.Projects/Coding/JUCE/WebTenori/Resources/ForResampling/Flute-Long.wav
     // /Users/mihaitraista/4.Projects/Coding/JUCE/CycleChopper/Resources/Cello_C2_1.wav
     
-    mDataModel.readAudioFileAndCopyToVector("/Users/mihaitraista/4.Projects/Coding/JUCE/WebTenori/Resources/ForResampling/Flute-Long.wav");
+    juce::File defaultFile = juce::File("/Users/mihaitraista/4.Projects/Coding/JUCE/WebTenori/Resources/ForResampling/Flute-Long.wav");
+
+    mDataModel.readFileAndStoreDataInOrigAudioData(defaultFile);
     
     updateVectors();
     
-//    addAndMakeVisible(mDragDropAreaOriginal);
-//    addAndMakeVisible(mDragDropAreaResampled);
-
     addAndMakeVisible(mUI);
     
     // ask for audio input permission
@@ -114,9 +102,6 @@ void MainComponent::resized()
     float bigButtonWidth = 86;
     float bigButtonHeight = 30;
     
-//    mDragDropAreaOriginal.setBounds(553, buttonsYOffset - 45, 116, 40);
-//    mDragDropAreaResampled.setBounds(673, buttonsYOffset - 45, 116, 40);
-    
     mUI.setBounds(0, 0, width, height);
 }
 
@@ -147,38 +132,31 @@ bool MainComponent::keyPressed(const juce::KeyPress& key, Component* originating
     return false;
 }
 
-void MainComponent::newFileWasDropped(bool isResampled){
-//    std::cout << "newFileWasDropped message from parent class - >" << isResampled << std::endl;
-//
-//    if(isResampled){
-//        // clear all vectors, except mResampledCycles which has just been filled by DragDropArea
-//        mOrigAudioData.clear();
-//        mPolarCycles.clear();
-//        for(int i = 0; i < N_WT_BANDS; i++){
-//            mResynthesizedCycles[i].clear();
-//        }
-//
-//        std::vector<float> resampledCycle = std::vector<float>(WTSIZE, 0.0f);
-//
-//        size_t nCycles = mResampledCycles.size() / WTSIZE;
-//
-//        for(int cycleIndex = 0; cycleIndex < nCycles; cycleIndex++){
-//            for(int i = 0; i < WTSIZE; i++){
-//                resampledCycle[i] = mResampledCycles[cycleIndex * WTSIZE + i];
-//            }
-//
-//            addResynthesizedCycle(resampledCycle);
-//        }
-//
-//        mUI.setRangeOfResampledZoomSlider(nCycles);
-//        updateLengthInfoLabel();
-//        mUI.setEventConfirmationLabelTextAndVisibility("New Resynthesized Cycles Added!", true);
-//
-//    } else {
-//        calculateZeroCrossingsAndUpdateVectors();
-//    }
-//
-//    repaint();
+void MainComponent::newFileWasDropped(juce::File audioFile, bool isResampled){
+    std::cout << "newFileWasDropped message from parent class - >" << isResampled << std::endl;
+            
+    if(isResampled){
+        mDataModel.readFileAndStoreDataInResampledCycles(audioFile);
+
+        int nCycles = mDataModel.clearVectorsAndResynthesizeAllCycles();
+        
+        mUI.setRangeOfResampledZoomSlider(nCycles);
+        updateLengthInfoLabel();
+        
+        mUI.triggerClickModeResampled();
+        
+        mUI.setEventConfirmationLabelTextAndVisibility("New Resynthesized Cycles Added!", true);
+    } else {
+        mDataModel.readFileAndStoreDataInOrigAudioData(audioFile);
+
+        mDataModel.setOrigFileName(audioFile.getFileName());
+
+        updateVectors();
+        
+        mUI.triggerClickModeOrig();
+    }
+
+    repaint();
 }
 
 void MainComponent::updateLengthInfoLabel(){
@@ -220,23 +198,27 @@ void MainComponent::handleSliderValueChanged(juce::Slider* slider) {
 
         mUI.setLargeWaveformStart(startSample);
 
-        mUI.setEventConfirmationLabelTextAndVisibility("hello", false);
+        mUI.setEventConfirmationLabelTextAndVisibility("", false);
     }else if (id == "mCycleLenHintSlider"){
         // update the mStartSampleIndex so that we keep the waveform centered while zooming
 
         int newHint = mUI.getCycleLenHintSliderValue();
         int diff = newHint - mDataModel.getCycleLenHint();
         int halfDiff = diff / 2.0f;
-
-        mDataModel.setCycleLenHint(newHint);
+        int currentStart = mUI.getLargeWaveformStartSampleIndex();
+        int updatedStart = currentStart - halfDiff;
         
-        mUI.setLargeWaveformStart(newHint * 2);
+        mUI.setStartSampleIndexSlider(updatedStart);
+        
+        mDataModel.setCycleLenHint(newHint);
+
+        mUI.setLargeWaveformLength(newHint * 2);
 
         mUI.setRangeOfStartSampleIndexSlider(mDataModel.getSizeOfOrigAudioData() - newHint * 2, false);
 
         mDataModel.findClosestZeroCrossings();
 
-        mUI.setEventConfirmationLabelTextAndVisibility("hello", false);
+        mUI.setEventConfirmationLabelTextAndVisibility("", false);
     } else if (id == "mBandSlider" && mUI.getMode() != UI::Modes::ORIG){
         int band = mUI.getBandSliderValue();
         

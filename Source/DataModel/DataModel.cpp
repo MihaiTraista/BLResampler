@@ -67,10 +67,10 @@ void DataModel::commit(){
 
     mResampledCycles.insert(mResampledCycles.end(), resampled.begin(), resampled.end());
 
-    addResynthesizedCycle(resampled);
+    performDFTandAppendResynthesizedCycleForAllBands(resampled);
 }
 
-void DataModel::addResynthesizedCycle(const std::vector<float>& resampledCycle){
+void DataModel::performDFTandAppendResynthesizedCycleForAllBands(const std::vector<float>& resampledCycle){
     std::vector<float> polarValues = std::vector<float>(WTSIZE * 2, 0.0f);
     std::vector<float> resynthesized = std::vector<float>(WTSIZE, 0.0f);
 
