@@ -19,6 +19,7 @@
 #include "../FileHandler/FileHandler.hpp"
 #include "../Resampler/Resampler.hpp"
 #include "../ZeroCrossingFinder/ZeroCrossingFinder.hpp"
+#include "../Fourier/Fourier.hpp"
 
 class DataModel
 {
@@ -26,19 +27,30 @@ public:
     DataModel();
     ~DataModel();
         
-    inline int getStartSampleIndex() const { return mStartSampleIndex; };
+    //  SETTERS
     inline void setStartSampleIndex(int value) { mStartSampleIndex = value; };
+    inline void setCycleLenHint(int newHint){ mCycleLenHint = newHint; };
+    inline void setSelectedBand(int val){ mSelectedBand = val; };
+
+    //  GETTERS
     inline const std::vector<float>& getReferenceForOrigAudioDataVector() { return mOrigAudioData; };
     inline const std::vector<float>& getReferenceForResampledCyclesVector() { return mResampledCycles; };
+    inline const std::vector<float>& getReferenceForResynthesizedCyclesVector() {
+        return mResynthesizedCycles[mSelectedBand]; };
     inline const std::vector<bool>& getReferenceForZeroCrossingsVector() { return mZeroCrossings; };
-    inline const std::vector<bool>& getReferenceForVectorThatShowsWhichSamplesAreCommitted() { return mVectorThatShowsWhichSamplesAreCommitted; };
+    inline const std::vector<bool>& getReferenceForVectorThatShowsWhichSamplesAreCommitted() {
+        return mVectorThatShowsWhichSamplesAreCommitted; };
     inline const int& getReferenceOfClosestZeroCrossingStart() { return mClosestZeroCrossingStart; };
     inline const int& getReferenceOfClosestZeroCrossingEnd() { return mClosestZeroCrossingEnd; };
     inline const int& getReferenceForCycleLenHint() { return mCycleLenHint; };
+
+    inline int getStartSampleIndex() const { return mStartSampleIndex; };
     inline int getSizeOfOrigAudioData(){ return static_cast<int>(mOrigAudioData.size()); };
     inline int getSizeOfResampledCycles(){ return static_cast<int>(mResampledCycles.size()); };
+    inline int getSizeOfResynthesizedCycles(){ return static_cast<int>(mResynthesizedCycles[0].size()); };
     inline int getCycleLenHint(){ return mCycleLenHint; };
 
+    //  OTHER METHODS
     inline void readAudioFileAndCopyToVector(juce::String filePath){
         juce::File audioFile = juce::File(filePath);
 
@@ -48,6 +60,18 @@ public:
     }
 
     void calculateZeroCrossingsAndUpdateVectors();
+    
+    inline void findClosestZeroCrossings(){
+        pZeroCrossingFinder->findClosestZeroCrossingsToCycleLenHint(mZeroCrossings,
+                                                                    mClosestZeroCrossingStart,
+                                                                    mClosestZeroCrossingEnd,
+                                                                    mStartSampleIndex,
+                                                                    mCycleLenHint);
+
+    };
+    
+    void commit();
+    void addResynthesizedCycle(const std::vector<float>& resampledCycle);
 
 private:
     int mStartSampleIndex = 0;

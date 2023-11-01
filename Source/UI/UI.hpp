@@ -23,6 +23,12 @@ class UI :  public juce::Component,
             private juce::ComboBox::Listener
 {
 public:
+    enum Modes{
+        ORIG,
+        RESAMPLED,
+        RESYNTHESIZED
+    };
+
     UI(EventInterface* handler,
        int sizeOfOrigAudioData,
        int cycleLenHint);
@@ -33,8 +39,12 @@ public:
         
     void resized() override;
     
-    inline void buttonClicked(juce::Button* button) override {};
+    // EVENT LISTENER
+    inline void buttonClicked(juce::Button* button) override {
+        mEventHandler->handleButtonClicked(button);
+    };
 
+    // SETTERS
     inline void setRangeOfStartSampleIndexSlider(int newRange, bool shouldGetValueToHalfTheRange){
         mStartSampleIndexSlider.setRange(0, newRange);
         if(shouldGetValueToHalfTheRange)
@@ -55,6 +65,9 @@ public:
         mEventConfirmationLabel.setVisible(isVisible);
     };
     
+    void setMode(Modes mode);
+    
+    // GETTERS
     inline int getStartSampleIndexSliderValue(){ return mStartSampleIndexSlider.getValue(); };
     inline int getCycleLenHintSliderValue(){ return mCycleLenHintSlider.getValue(); };
     inline int getBandSliderValue(){ return mBandSlider.getValue(); };
@@ -65,11 +78,14 @@ public:
     inline int getResampledZoomSliderMax(){ return mResampledZoomSlider.getMaxValue(); };
 
 private:
+    // EVENT LISTENERS
     inline void sliderValueChanged(juce::Slider* slider) override {
         mEventHandler->handleSliderValueChanged(slider);
     };
     
-    inline void comboBoxChanged(juce::ComboBox* box) override {};
+    inline void comboBoxChanged(juce::ComboBox* box) override {
+        mEventHandler->handleComboBoxChanged(box);
+    };
     
     void addSlidersButtonsAndLabels(int sizeOfOrigAudioData, int cycleLenHint);
     

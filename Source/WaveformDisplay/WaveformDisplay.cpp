@@ -45,10 +45,6 @@ void WaveformDisplay::paint(juce::Graphics& g)
     if (pAudioVector->size() < 2 || mDisplayLengthInSamples < 2)
         return;
     
-    for(int i = 0; i < 20; i++){
-        std::cout << "av in waveform " << pAudioVector->size() << ", " << (*pAudioVector)[i + 1000] << std::endl;
-    }
-    
     g.fillAll(juce::Colour::fromRGB(10, 10, 20));
 
     g.setColour(juce::Colour::fromRGB(180, 180, 150));
@@ -123,7 +119,7 @@ void WaveformDisplay::drawWaveformSampleBySample(juce::Graphics& g,
         float topCoordinate = sampleValue >= 0.0f ? (1.0f - (sampleValue * 0.5f + 0.5f)) * height : height / 2.0f;
         float bottomCoordinate = sampleValue >= 0.0f ? height / 2.0f : (1.0f - (sampleValue * 0.5f + 0.5f)) * height;
         
-        if ((*pVectorThatShowsWhichSamplesAreCommitted)[sampleIndex]){
+        if (pVectorThatShowsWhichSamplesAreCommitted && (*pVectorThatShowsWhichSamplesAreCommitted)[sampleIndex]){
             g.setColour(juce::Colour::fromRGB(120, 120, 110));
         } else {
             g.setColour(juce::Colour::fromRGB(220, 220, 200));

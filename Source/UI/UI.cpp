@@ -22,6 +22,38 @@ UI::UI(EventInterface* handler,
 
 UI::~UI(){}
 
+void UI::setMode(Modes mode){
+    mModeOrigButton.setToggleState(mode == Modes::ORIG, juce::dontSendNotification);
+    mModeResampledButton.setToggleState(mode == Modes::RESAMPLED, juce::dontSendNotification);
+    mModeResynthesizedButton.setToggleState(mode == Modes::RESYNTHESIZED, juce::dontSendNotification);
+    
+    if(mode == Modes::ORIG){
+        mResampledZoomSlider.setVisible(false);
+        mResampledZoomSliderLabel.setVisible(false);
+        mCycleLenHintSlider.setVisible(true);
+        mCycleLenHintSliderLabel.setVisible(true);
+        mBandSlider.setVisible(false);
+        mBandSliderLabel.setVisible(false);
+        mStartSampleIndexSlider.setVisible(true);
+    } else if (mode == Modes::RESAMPLED){
+        mResampledZoomSlider.setVisible(true);
+        mResampledZoomSliderLabel.setVisible(true);
+        mCycleLenHintSlider.setVisible(false);
+        mCycleLenHintSliderLabel.setVisible(false);
+        mBandSlider.setVisible(false);
+        mBandSliderLabel.setVisible(false);
+        mStartSampleIndexSlider.setVisible(false);
+    } else if (mode == Modes::RESYNTHESIZED){
+        mResampledZoomSlider.setVisible(true);
+        mResampledZoomSliderLabel.setVisible(true);
+        mCycleLenHintSlider.setVisible(false);
+        mCycleLenHintSliderLabel.setVisible(false);
+        mBandSlider.setVisible(true);
+        mBandSliderLabel.setVisible(true);
+        mStartSampleIndexSlider.setVisible(false);
+    }
+}
+
 void UI::paint(juce::Graphics& g)
 {
 }

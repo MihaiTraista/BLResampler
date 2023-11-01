@@ -52,7 +52,6 @@ private:
     void updateLengthInfoLabel();
     void handleCommitButton();
     void updateVectors();
-    void addResynthesizedCycle(const std::vector<float>& resampledCycle);
     
     DataModel mDataModel;
 
