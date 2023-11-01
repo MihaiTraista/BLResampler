@@ -118,6 +118,8 @@ public:
     inline bool getModeResampledButtonState(){ return mModeResampledButton.getToggleState(); };
     inline int getResampledZoomSliderMin(){ return mResampledZoomSlider.getMinValue(); };
     inline int getResampledZoomSliderMax(){ return mResampledZoomSlider.getMaxValue(); };
+    inline bool getPlayButtonToggleState(){ return mPlayButton.getToggleState(); };
+    inline Modes getMode(){ return mMode; };
 
 private:
     // EVENT LISTENERS
@@ -164,6 +166,8 @@ private:
     juce::TextButton mPrevSampleButton;
     juce::TextButton mNextSampleButton;
     juce::TextButton mNextCycleButton;
+    
+    Modes mMode = Modes::ORIG;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (UI)
 };

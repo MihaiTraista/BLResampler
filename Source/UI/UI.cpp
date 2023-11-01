@@ -23,6 +23,8 @@ UI::UI(EventInterface* handler,
 UI::~UI(){}
 
 void UI::setMode(Modes mode){
+    mMode = mode;
+    
     mModeOrigButton.setToggleState(mode == Modes::ORIG, juce::dontSendNotification);
     mModeResampledButton.setToggleState(mode == Modes::RESAMPLED, juce::dontSendNotification);
     mModeResynthesizedButton.setToggleState(mode == Modes::RESYNTHESIZED, juce::dontSendNotification);
@@ -35,6 +37,14 @@ void UI::setMode(Modes mode){
         mBandSlider.setVisible(false);
         mBandSliderLabel.setVisible(false);
         mStartSampleIndexSlider.setVisible(true);
+        mPrevCycleButton.setEnabled(true);
+        mPrevSampleButton.setEnabled(true);
+        mNextSampleButton.setEnabled(true);
+        mNextCycleButton.setEnabled(true);
+        mPrevCycleButton.setVisible(true);
+        mPrevSampleButton.setVisible(true);
+        mNextSampleButton.setVisible(true);
+        mNextCycleButton.setVisible(true);
     } else if (mode == Modes::RESAMPLED){
         mResampledZoomSlider.setVisible(true);
         mResampledZoomSliderLabel.setVisible(true);
@@ -43,6 +53,14 @@ void UI::setMode(Modes mode){
         mBandSlider.setVisible(false);
         mBandSliderLabel.setVisible(false);
         mStartSampleIndexSlider.setVisible(false);
+        mPrevCycleButton.setEnabled(false);
+        mPrevSampleButton.setEnabled(false);
+        mNextSampleButton.setEnabled(false);
+        mNextCycleButton.setEnabled(false);
+        mPrevCycleButton.setVisible(false);
+        mPrevSampleButton.setVisible(false);
+        mNextSampleButton.setVisible(false);
+        mNextCycleButton.setVisible(false);
     } else if (mode == Modes::RESYNTHESIZED){
         mResampledZoomSlider.setVisible(true);
         mResampledZoomSliderLabel.setVisible(true);
@@ -51,6 +69,14 @@ void UI::setMode(Modes mode){
         mBandSlider.setVisible(true);
         mBandSliderLabel.setVisible(true);
         mStartSampleIndexSlider.setVisible(false);
+        mPrevCycleButton.setEnabled(false);
+        mPrevSampleButton.setEnabled(false);
+        mNextSampleButton.setEnabled(false);
+        mNextCycleButton.setEnabled(false);
+        mPrevCycleButton.setVisible(false);
+        mPrevSampleButton.setVisible(false);
+        mNextSampleButton.setVisible(false);
+        mNextCycleButton.setVisible(false);
     }
 }
 

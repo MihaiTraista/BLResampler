@@ -82,13 +82,8 @@ void WaveformDisplay::drawWaveformAsEnvelopeFollower(juce::Graphics& g,
     int startSampleIndex, endSampleIndex;
     
     for (int x = 0; x < width; ++x){
-        if(mShowZeroCrossings){
-            startSampleIndex = juce::jmap<float>(x, 0, width, mDisplayStartSample, mDisplayStartSample + numSamplesToDisplay);
-            endSampleIndex = juce::jmap<float>(x + 1, 0, width, mDisplayStartSample, mDisplayStartSample + numSamplesToDisplay);
-        } else {
-            startSampleIndex = juce::jmap<float>(x, 0, width, 0, numSamplesToDisplay);
-            endSampleIndex = juce::jmap<float>(x + 1, 0, width, 0, numSamplesToDisplay);
-        }
+        startSampleIndex = juce::jmap<float>(x, 0, width, mDisplayStartSample, mDisplayStartSample + numSamplesToDisplay);
+        endSampleIndex = juce::jmap<float>(x + 1, 0, width, mDisplayStartSample, mDisplayStartSample + numSamplesToDisplay);
 
         float sum = 0.0f;
         for (int i = startSampleIndex; i < endSampleIndex; ++i){
@@ -110,10 +105,7 @@ void WaveformDisplay::drawWaveformSampleBySample(juce::Graphics& g,
     
     for (int x = 0; x < width; ++x)
     {
-        if(mShowZeroCrossings)
-            sampleIndex = juce::jmap<float>(x, 0, width, mDisplayStartSample, mDisplayStartSample + numSamplesToDisplay);
-        else
-            sampleIndex = juce::jmap<float>(x, 0, width, 0, numSamplesToDisplay);
+        sampleIndex = juce::jmap<float>(x, 0, width, mDisplayStartSample, mDisplayStartSample + numSamplesToDisplay);
 
         auto sampleValue = bufferToDraw[sampleIndex];
         float topCoordinate = sampleValue >= 0.0f ? (1.0f - (sampleValue * 0.5f + 0.5f)) * height : height / 2.0f;
