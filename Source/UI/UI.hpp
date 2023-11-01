@@ -30,6 +30,11 @@ public:
     };
 
     UI(EventInterface* handler,
+       const std::vector<float>& audioVector,
+       const std::vector<bool>& zeroCrossings,
+       const std::vector<bool>& vectorThatShowsWhichSamplesAreCommitted,
+       const int& closestZeroCrossingStartPointer,
+       const int& closestZeroCrossingEndPointer,
        int sizeOfOrigAudioData,
        int cycleLenHint);
 
@@ -65,6 +70,25 @@ public:
         mEventConfirmationLabel.setVisible(isVisible);
     };
     
+    inline void setLargeWaveformVector(const std::vector<float>& mAV,
+                                       int displayStartSample,
+                                       int displayLengthInSamples,
+                                       bool showZeroCrossings){
+        mLargeWaveform.setAudioVector(mAV, displayStartSample, displayLengthInSamples, showZeroCrossings);
+    };
+    
+    inline void setSmallWaveformVector(const std::vector<float>& mAV,
+                                       int displayStartSample,
+                                       int displayLengthInSamples,
+                                       bool showZeroCrossings){
+        mSmallWaveform.setAudioVector(mAV, displayStartSample, displayLengthInSamples, showZeroCrossings);
+    };
+    
+    inline void setSmallWaveformStart(int val){ mSmallWaveform.setDisplayStartSample(val); };
+    inline void setLargeWaveformStart(int val){ mLargeWaveform.setDisplayStartSample(val); };
+    inline void setSmallWaveformLength(int val){ mSmallWaveform.setDisplayLengthInSamples(val); };
+    inline void setLargeWaveformLength(int val){ mLargeWaveform.setDisplayLengthInSamples(val); };
+
     void setMode(Modes mode);
 
     // NAVIGATION METHODS
@@ -131,11 +155,15 @@ private:
         mEventHandler->handleComboBoxChanged(box);
     };
     
+    // OTHER PRIVATE METHODS
     void addSlidersButtonsAndLabels(int sizeOfOrigAudioData, int cycleLenHint);
-    
     void addIds();
     
+    // MEMBERS
     EventInterface* mEventHandler = nullptr;
+    
+    WaveformDisplay mLargeWaveform;
+    WaveformDisplay mSmallWaveform;
 
     juce::Slider mStartSampleIndexSlider;
     juce::Slider mCycleLenHintSlider;

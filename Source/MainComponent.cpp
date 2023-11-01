@@ -2,14 +2,6 @@
 
 //==============================================================================
 MainComponent::MainComponent():
-    mLargeWaveform(mDataModel.getReferenceForOrigAudioDataVector(),
-                   mDataModel.getReferenceForZeroCrossingsVector(),
-                   mDataModel.getReferenceForVectorThatShowsWhichSamplesAreCommitted(),
-                   mDataModel.getReferenceOfClosestZeroCrossingStart(),
-                   mDataModel.getReferenceOfClosestZeroCrossingEnd(),
-                   0,
-                   500),
-    mSmallWaveform(mDataModel.getReferenceForOrigAudioDataVector(), 0, 0),
 
 //    mDragDropAreaOriginal("Original",
 //                          mOrigAudioData,
@@ -25,6 +17,11 @@ MainComponent::MainComponent():
 //                           }),
 
     mUI(this,
+        mDataModel.getReferenceForOrigAudioDataVector(),
+        mDataModel.getReferenceForZeroCrossingsVector(),
+        mDataModel.getReferenceForVectorThatShowsWhichSamplesAreCommitted(),
+        mDataModel.getReferenceOfClosestZeroCrossingStart(),
+        mDataModel.getReferenceOfClosestZeroCrossingEnd(),
         mDataModel.getSizeOfOrigAudioData(),
         mDataModel.getCycleLenHint()),
 
@@ -47,8 +44,6 @@ MainComponent::MainComponent():
     
     updateVectors();
     
-    addAndMakeVisible(mLargeWaveform);
-    addAndMakeVisible(mSmallWaveform);
 //    addAndMakeVisible(mDragDropAreaOriginal);
 //    addAndMakeVisible(mDragDropAreaResampled);
 
@@ -118,9 +113,6 @@ void MainComponent::resized()
     float buttonsYOffset = 50;
     float bigButtonWidth = 86;
     float bigButtonHeight = 30;
-    
-    mLargeWaveform.setBounds(0, bAreaY, width, bAreaHeight);
-    mSmallWaveform.setBounds(0, cAreaY, width, cAreaHeight);
     
 //    mDragDropAreaOriginal.setBounds(553, buttonsYOffset - 45, 116, 40);
 //    mDragDropAreaResampled.setBounds(673, buttonsYOffset - 45, 116, 40);
@@ -201,11 +193,11 @@ void MainComponent::updateVectors(){
     pPlayback->setReadingStart(0);
     pPlayback->setReadingLength(mDataModel.getSizeOfOrigAudioData());
     
-    mSmallWaveform.setDisplayLengthInSamples(mDataModel.getSizeOfOrigAudioData());
-    mLargeWaveform.setDisplayLengthInSamples(DEFAULT_CYCLE_LEN_HINT * 2);
-    
     int rangeOfSlider = mDataModel.getSizeOfOrigAudioData() - mDataModel.getCycleLenHint() * 2;
     mUI.setRangeOfStartSampleIndexSlider(rangeOfSlider , true);
+
+    mUI.setSmallWaveformLength(mDataModel.getSizeOfOrigAudioData());
+    mUI.setLargeWaveformLength(DEFAULT_CYCLE_LEN_HINT * 2);
 }
 
 void MainComponent::handleCommitButton(){
@@ -226,7 +218,7 @@ void MainComponent::handleSliderValueChanged(juce::Slider* slider) {
         mDataModel.setStartSampleIndex(startSample);
         mDataModel.findClosestZeroCrossings();
 
-        mLargeWaveform.setDisplayStartSample(startSample);
+        mUI.setLargeWaveformStart(startSample);
 
         mUI.setEventConfirmationLabelTextAndVisibility("hello", false);
     }else if (id == "mCycleLenHintSlider"){
@@ -238,7 +230,7 @@ void MainComponent::handleSliderValueChanged(juce::Slider* slider) {
 
         mDataModel.setCycleLenHint(newHint);
         
-        mLargeWaveform.setDisplayLengthInSamples(newHint * 2);
+        mUI.setLargeWaveformStart(newHint * 2);
 
         mUI.setRangeOfStartSampleIndexSlider(mDataModel.getSizeOfOrigAudioData() - newHint * 2, false);
 
@@ -251,14 +243,12 @@ void MainComponent::handleSliderValueChanged(juce::Slider* slider) {
         mDataModel.setSelectedBand(band);
         
         if(mUI.getModeResynthesizedButtonState()){
-            mLargeWaveform.setAudioVector(mDataModel.getReferenceForResynthesizedCyclesVector(),
-                                          mUI.getResampledZoomSliderMin() * WTSIZE,
-                                          (mUI.getResampledZoomSliderMax() - mUI.getResampledZoomSliderMin()) * WTSIZE,
-                                          false);
-//            mSmallWaveform.setAudioVector(mDataModel.getReferenceForResynthesizedCyclesVector(),
-//                                          0,
-//                                          mDataModel.getSizeOfResynthesizedCycles(),
-//                                          false);
+            mUI.setLargeWaveformVector(mDataModel.getReferenceForResynthesizedCyclesVector(),
+                                       mUI.getResampledZoomSliderMin() * WTSIZE,
+                                       (mUI.getResampledZoomSliderMax() - mUI.getResampledZoomSliderMin()) * WTSIZE,
+                                       false);
+
+            
             pPlayback->setAudioVector(mDataModel.getReferenceForResynthesizedCyclesVector(),
                                       mUI.getResampledZoomSliderMin() * WTSIZE,
                                       (mUI.getResampledZoomSliderMax() - mUI.getResampledZoomSliderMin()) * WTSIZE);
@@ -269,9 +259,9 @@ void MainComponent::handleSliderValueChanged(juce::Slider* slider) {
         int maxVal = mUI.getResampledZoomSliderMax();
         int differenceVal = maxVal - minVal;
         
-        mLargeWaveform.setDisplayStartSample(minVal * WTSIZE);
-        mLargeWaveform.setDisplayLengthInSamples(differenceVal * WTSIZE);
-
+        mUI.setLargeWaveformStart(minVal * WTSIZE);
+        mUI.setLargeWaveformLength(differenceVal * WTSIZE);
+        
         pPlayback->setReadingStart(minVal * WTSIZE);
         pPlayback->setReadingLength(differenceVal * WTSIZE);
     }
@@ -320,27 +310,29 @@ void MainComponent::handleButtonClicked(juce::Button* button) {
         
         mUI.setMode(UI::Modes::ORIG);
 
-        mLargeWaveform.setAudioVector(mDataModel.getReferenceForOrigAudioDataVector(),
-                                      mDataModel.getStartSampleIndex(),
-                                      mDataModel.getCycleLenHint() * 2,
-                                      true);
-        mSmallWaveform.setAudioVector(mDataModel.getReferenceForOrigAudioDataVector(),
-                                      0,
-                                      mDataModel.getSizeOfOrigAudioData(),
-                                      false);
+        mUI.setLargeWaveformVector(mDataModel.getReferenceForOrigAudioDataVector(),
+                                   mDataModel.getStartSampleIndex(),
+                                   mDataModel.getCycleLenHint() * 2,
+                                   true);
+
+        mUI.setSmallWaveformVector(mDataModel.getReferenceForOrigAudioDataVector(),
+                                   0,
+                                   mDataModel.getSizeOfOrigAudioData(),
+                                   false);
+
         pPlayback->setAudioVector(mDataModel.getReferenceForOrigAudioDataVector(), 0, mDataModel.getSizeOfOrigAudioData());
 
     } else if(id == "mModeResampledButton"){
 
         mUI.setMode(UI::Modes::RESAMPLED);
-        mLargeWaveform.setAudioVector(mDataModel.getReferenceForResampledCyclesVector(),
-                                      mUI.getResampledZoomSliderMin() * WTSIZE,
-                                      mUI.getResampledZoomSliderMax() * WTSIZE,
-                                      false);
-        mSmallWaveform.setAudioVector(mDataModel.getReferenceForResampledCyclesVector(),
-                                      0,
-                                      mDataModel.getSizeOfResampledCycles(),
-                                      false);
+        mUI.setLargeWaveformVector(mDataModel.getReferenceForResampledCyclesVector(),
+                                   mUI.getResampledZoomSliderMin() * WTSIZE,
+                                   mUI.getResampledZoomSliderMax() * WTSIZE,
+                                   false);
+        mUI.setSmallWaveformVector(mDataModel.getReferenceForResampledCyclesVector(),
+                                   0,
+                                   mDataModel.getSizeOfResampledCycles(),
+                                   false);
 
         pPlayback->setAudioVector(mDataModel.getReferenceForResampledCyclesVector(),
                                   mUI.getResampledZoomSliderMin() * WTSIZE,
@@ -349,14 +341,14 @@ void MainComponent::handleButtonClicked(juce::Button* button) {
     } else if(id == "mModeResynthesizedButton"){
         mUI.setMode(UI::Modes::RESYNTHESIZED);
 
-        mLargeWaveform.setAudioVector(mDataModel.getReferenceForResynthesizedCyclesVector(),
-                                      mUI.getResampledZoomSliderMin() * WTSIZE,
-                                      mUI.getResampledZoomSliderMax() * WTSIZE,
-                                      false);
-        mLargeWaveform.setAudioVector(mDataModel.getReferenceForResynthesizedCyclesVector(),
-                                      0,
-                                      mDataModel.getSizeOfResynthesizedCycles(),
-                                      false);
+        mUI.setLargeWaveformVector(mDataModel.getReferenceForResynthesizedCyclesVector(),
+                                   mUI.getResampledZoomSliderMin() * WTSIZE,
+                                   mUI.getResampledZoomSliderMax() * WTSIZE,
+                                   false);
+        mUI.setSmallWaveformVector(mDataModel.getReferenceForResynthesizedCyclesVector(),
+                                   0,
+                                   mDataModel.getSizeOfResynthesizedCycles(),
+                                   false);
 
         pPlayback->setAudioVector(mDataModel.getReferenceForResynthesizedCyclesVector(),
                                   mUI.getResampledZoomSliderMin() * WTSIZE,

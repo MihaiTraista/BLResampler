@@ -11,11 +11,26 @@
 #include "UI.hpp"
 
 UI::UI(EventInterface* handler,
+       const std::vector<float>& audioVector,
+       const std::vector<bool>& zeroCrossings,
+       const std::vector<bool>& vectorThatShowsWhichSamplesAreCommitted,
+       const int& closestZeroCrossingStartPointer,
+       const int& closestZeroCrossingEndPointer,
        int sizeOfOrigAudioData,
        int cycleLenHint)
 :
-    mEventHandler(handler)
+    mEventHandler(handler),
+    mLargeWaveform(audioVector,
+                   zeroCrossings,
+                   vectorThatShowsWhichSamplesAreCommitted,
+                   closestZeroCrossingStartPointer,
+                   closestZeroCrossingEndPointer,
+                   0,
+                   500),
+    mSmallWaveform(audioVector, 0, 0)
 {
+    addAndMakeVisible(mLargeWaveform);
+    addAndMakeVisible(mSmallWaveform);
     addSlidersButtonsAndLabels(sizeOfOrigAudioData, cycleLenHint);
     addIds();
 }
@@ -97,6 +112,9 @@ void UI::resized()
     float buttonsYOffset = 50;
     float bigButtonWidth = 86;
     float bigButtonHeight = 30;
+    
+    mLargeWaveform.setBounds(0, bAreaY, width, bAreaHeight);
+    mSmallWaveform.setBounds(0, cAreaY, width, cAreaHeight);
     
     mModeOrigButton.setBounds(gap, buttonsYOffset, bigButtonWidth, bigButtonHeight);
     mModeResampledButton.setBounds(gap + bigButtonWidth + 2, buttonsYOffset, bigButtonWidth, bigButtonHeight);

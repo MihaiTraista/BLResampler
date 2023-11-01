@@ -55,9 +55,6 @@ private:
     
     DataModel mDataModel;
 
-    WaveformDisplay mLargeWaveform;
-    WaveformDisplay mSmallWaveform;
-    
     UI mUI;
 //    DragDropArea mDragDropAreaOriginal;
 //    DragDropArea mDragDropAreaResampled;
