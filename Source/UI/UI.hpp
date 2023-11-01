@@ -66,6 +66,48 @@ public:
     };
     
     void setMode(Modes mode);
+
+    // NAVIGATION METHODS
+    inline void goToPrevCycle(int actualCycleLen){
+        int newVal = mStartSampleIndexSlider.getValue() - actualCycleLen;
+        if(newVal < 0)
+            newVal = 0;
+        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+    };
+
+    inline void goToNextCycle(int actualCycleLen, int origVectorSize){
+        int newVal = mStartSampleIndexSlider.getValue() + actualCycleLen;
+        if(newVal > origVectorSize - actualCycleLen)
+            newVal = origVectorSize - actualCycleLen;
+        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+    };
+    
+    inline void goToPrevSample(){
+        int newVal = mStartSampleIndexSlider.getValue() - 2;
+        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+    }
+    
+    inline void goToNextSample(){
+        int newVal = mStartSampleIndexSlider.getValue() + 2;
+        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+    }
+    
+    // BUTTON TRIGGERS
+    inline void triggerClickPrevCycleButton(){ mPrevCycleButton.triggerClick(); };
+    inline void triggerClickNextCycleButton(){ mNextCycleButton.triggerClick(); };
+    inline void triggerClickPrevSampleButton(){ mPrevSampleButton.triggerClick(); };
+    inline void triggerClickNextSampleButton(){ mNextSampleButton.triggerClick(); };
+    
+    // ZOOM
+    inline void zoomOutOneUnit(){
+        int newVal = mCycleLenHintSlider.getValue() - 4;
+        mCycleLenHintSlider.setValue(newVal, juce::sendNotificationSync);
+    };
+
+    inline void zoomInOneUnit(){
+        int newVal = mCycleLenHintSlider.getValue() + 4;
+        mCycleLenHintSlider.setValue(newVal, juce::sendNotificationSync);
+    };
     
     // GETTERS
     inline int getStartSampleIndexSliderValue(){ return mStartSampleIndexSlider.getValue(); };

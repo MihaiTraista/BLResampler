@@ -134,24 +134,22 @@ bool MainComponent::keyPressed(const juce::KeyPress& key, Component* originating
         handleCommitButton();
         return true;
     } else if (key.getTextCharacter() == 'H' || key.getTextCharacter() == 'h'){
-//        mPrevCycleButton.triggerClick();
+        mUI.triggerClickPrevCycleButton();
         return true;
     } else if (key.getTextCharacter() == 'L' || key.getTextCharacter() == 'l'){
-//        mNextCycleButton.triggerClick();
+        mUI.triggerClickNextCycleButton();
         return true;
     } else if (key.getTextCharacter() == 'J' || key.getTextCharacter() == 'j'){
-//        mPrevSampleButton.triggerClick();
+        mUI.triggerClickPrevSampleButton();
         return true;
     } else if (key.getTextCharacter() == 'K' || key.getTextCharacter() == 'k'){
-//        mNextSampleButton.triggerClick();
+        mUI.triggerClickNextSampleButton();
         return true;
     } else if (key.getTextCharacter() == 'I' || key.getTextCharacter() == 'i'){
-//        int newVal = mCycleLenHintSlider.getValue() - 4;
-//        mCycleLenHintSlider.setValue(newVal, juce::sendNotificationSync);
+        mUI.zoomOutOneUnit();
         return true;
     } else if (key.getTextCharacter() == 'U' || key.getTextCharacter() == 'u'){
-//        int newVal = mCycleLenHintSlider.getValue() + 4;
-//        mCycleLenHintSlider.setValue(newVal, juce::sendNotificationSync);
+        mUI.zoomInOneUnit();
         return true;
     }
     return false;
@@ -365,25 +363,13 @@ void MainComponent::handleButtonClicked(juce::Button* button) {
 //                                  (mResampledZoomSlider.getMaxValue() - mResampledZoomSlider.getMinValue()) * WTSIZE);
 
     } else if(id == "mPrevCycleButton"){
-//        int cycleLen = mClosestZeroCrossingEnd - mClosestZeroCrossingStart;
-//        int newVal = mStartSampleIndexSlider.getValue() - cycleLen;
-//        if(newVal < 0)
-//            newVal = 0;
-//        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+        mUI.goToPrevCycle(mDataModel.getActualCycleLen());        
     } else if(id == "mPrevSampleButton"){
-        
-//        int newVal = mStartSampleIndexSlider.getValue() - 2;
-//
-//        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+        mUI.goToPrevSample();
     } else if(id == "mNextSampleButton"){
-//        int newVal = mStartSampleIndexSlider.getValue() + 2;
-//        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+        mUI.goToNextSample();
     } else if(id == "mNextCycleButton"){
-//        int cycleLen = mClosestZeroCrossingEnd - mClosestZeroCrossingStart;
-//        int newVal = mStartSampleIndexSlider.getValue() + cycleLen;
-//        if(newVal > mOrigAudioData.size() - cycleLen)
-//            newVal = static_cast<int>(mOrigAudioData.size()) - cycleLen;
-//        mStartSampleIndexSlider.setValue(newVal, juce::sendNotificationSync);
+        mUI.goToNextCycle(mDataModel.getActualCycleLen(), mDataModel.getSizeOfOrigAudioData());
     }
     repaint();
 }

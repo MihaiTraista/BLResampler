@@ -48,6 +48,7 @@ public:
     inline int getSizeOfOrigAudioData(){ return static_cast<int>(mOrigAudioData.size()); };
     inline int getSizeOfResampledCycles(){ return static_cast<int>(mResampledCycles.size()); };
     inline int getSizeOfResynthesizedCycles(){ return static_cast<int>(mResynthesizedCycles[0].size()); };
+    inline int getActualCycleLen(){ return mClosestZeroCrossingEnd - mClosestZeroCrossingStart; };
     inline int getCycleLenHint(){ return mCycleLenHint; };
 
     //  OTHER METHODS
