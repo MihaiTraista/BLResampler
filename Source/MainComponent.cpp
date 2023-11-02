@@ -29,7 +29,7 @@ MainComponent::MainComponent():
     // /Users/mihaitraista/4.Projects/Coding/JUCE/WebTenori/Resources/ForResampling/Flute-Long.wav
     // /Users/mihaitraista/4.Projects/Coding/JUCE/CycleChopper/Resources/Cello_C2_1.wav
     
-    juce::File defaultFile = juce::File("/Users/mihaitraista/4.Projects/Coding/JUCE/WebTenori/Resources/ForResampling/Flute-Long.wav");
+    juce::File defaultFile = juce::File("/Users/mihaitraista/4.Projects/Coding/JUCE/CycleChopper/Resources/Cello_C2_1.wav");
 
     mDataModel.readFileAndStoreDataInOrigAudioData(defaultFile);
     
@@ -55,8 +55,6 @@ MainComponent::~MainComponent()
 {
     shutdownAudio();
 }
-
-
 
 void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
@@ -89,20 +87,7 @@ void MainComponent::paint (juce::Graphics& g)
 
 void MainComponent::resized()
 {
-    float aAreaY = 0;
-    float bAreaY = 150;
-    float cAreaY = 550;
-    float aAreaHeight = 150;
-    float bAreaHeight = 400;
-    float cAreaHeight = 50;
-    float width = getWidth();
-    float height = getHeight();
-    float gap = 5;
-    float buttonsYOffset = 50;
-    float bigButtonWidth = 86;
-    float bigButtonHeight = 30;
-    
-    mUI.setBounds(0, 0, width, height);
+    mUI.setBounds(0, 0, getWidth(), getHeight());
 }
 
 bool MainComponent::keyPressed(const juce::KeyPress& key, Component* originatingComponent){
