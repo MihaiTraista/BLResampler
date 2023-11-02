@@ -149,7 +149,7 @@ void UI::resized()
     mClearButton.setBounds(673, buttonsYOffset, 58, 30);
     mDeleteButton.setBounds(733, buttonsYOffset, 58, 30);
     
-    mCycleLengthComboBox.setBounds(733, buttonsYOffset + 32, 58, 20);
+    mCycleLengthComboBox.setBounds(673, buttonsYOffset + 32, 58 + 58 + 2, 20);
     
     mEventConfirmationLabel.setBounds(0, bAreaY, width, 16);
     mResampledLengthLabel.setBounds(280, cAreaY - 10, width - 300, 10);
