@@ -66,6 +66,18 @@ public:
     inline void readFileAndStoreDataInResampledCycles(juce::File audioFile){
         pFileHandler->readAudioFileAndCopyToVector(audioFile, mResampledCycles);
     };
+
+    inline void deleteLastCycle(){
+        // delete the last 1024 samples from the vectors
+        if (mResampledCycles.size() >= WTSIZE) {
+            mResampledCycles.erase(mResampledCycles.end() - WTSIZE, mResampledCycles.end());
+        }
+        for(auto& wt : mResynthesizedCycles){
+            if (wt.size() >= WTSIZE) {
+                wt.erase(wt.end() - WTSIZE, wt.end());
+            }
+        }
+    };
     
     inline int clearVectorsAndResynthesizeAllCycles(){
         // clear

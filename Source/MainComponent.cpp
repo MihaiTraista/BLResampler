@@ -253,6 +253,15 @@ void MainComponent::handleButtonClicked(juce::Button* button) {
         mUI.triggerClickModeOrig();
 
     } else if (id == "mDeleteButton"){
+        // it is the user's responsibility to call this only after the worker thread has finished resynthesizing all cycles
+        if(mDataModel.getSizeOfOrigAudioData() < WTSIZE)
+            return;
+        mDataModel.deleteLastCycle();
+        
+        mUI.updateLengthInfoLabel(mDataModel.getSizeOfResampledCycles());
+        mUI.setRangeOfResampledZoomSlider(mDataModel.getSizeOfResampledCycles() / WTSIZE);
+        mUI.setEventConfirmationLabelTextAndVisibility("Cycle Deleted!", true);
+        repaint();
     } else if (id == "mPlayButton"){
         bool playButtonState = mUI.getPlayButtonToggleState();
         
