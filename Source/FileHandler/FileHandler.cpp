@@ -168,3 +168,21 @@ void FileHandler::normalizeAudioVector(std::vector<float>& audioVector){
         data[i] = data[i] * scaler;
     }
 }
+
+void FileHandler::saveVectorAsTextFileOnDesktop(std::vector<float>& vector, juce::String fileName){
+    juce::File desktop = juce::File::getSpecialLocation(juce::File::userDesktopDirectory);
+    juce::File textFile = desktop.getChildFile(fileName + ".txt");
+    juce::FileOutputStream outputStream(textFile);
+
+    if(!outputStream.openedOk()) {
+        std::cerr << "Error: Could not open file for writing." << std::endl;
+        return;
+    }
+
+    for(size_t i = 0; i < vector.size(); i++) {
+        outputStream << static_cast<int>(i) << ", " << vector[i] << ";\n";
+    }
+
+    // Close the output stream
+    outputStream.flush();
+}

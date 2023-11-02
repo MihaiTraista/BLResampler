@@ -36,6 +36,8 @@ public:
     void saveMultiChannelAudioFile(const std::array<std::vector<float>, N_WT_BANDS>& arrayOfVectors,
                                    const juce::File& folderOfThisExport,
                                    const juce::String fileName);
+    
+    void saveVectorAsTextFileOnDesktop(std::vector<float>& vector, juce::String fileName);
 
 private:
     void normalizeAudioVector(std::vector<float>& audioData);
