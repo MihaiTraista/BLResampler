@@ -242,27 +242,14 @@ void MainComponent::handleButtonClicked(juce::Button* button) {
     if (id == "mCommitButton"){
         handleCommitButton();
     } else if (id == "mSaveButton"){
-//        pFileHandler->exportFiles(mOrigAudioData,
-//                                  mResampledCycles,
-//                                  mPolarCycles,
-//                                  mResynthesizedCycles,
-//                                  mOriginalFileName);
-//
-//        mEventConfirmationLabel.setText("File Saved!", juce::dontSendNotification);
-//        mEventConfirmationLabel.setVisible(true);
+        mDataModel.exportFiles();
+        mUI.setEventConfirmationLabelTextAndVisibility("File Saved!", true);
     } else if (id == "mClearButton"){
-//        mResampledCycles.clear();
-//        mPolarCycles.clear();
-//
-//        for(int i = 0; i < N_WT_BANDS; i++){
-//            mResynthesizedCycles[i].clear();
-//        }
-//
-//        updateLengthInfoLabel();
-//        mVectorThatShowsWhichSamplesAreCommitted.assign(mVectorThatShowsWhichSamplesAreCommitted.size(), false);
-//        mVectorThatShowsWhichSamplesAreCommitted.clear();
-//
-//        mModeOrigButton.setToggleState(true, juce::sendNotification);
+        mDataModel.clearAllResampledAndResynthesized();
+
+        updateLengthInfoLabel();
+
+        mUI.triggerClickModeOrig();
 
     } else if (id == "mDeleteButton"){
     } else if (id == "mPlayButton"){

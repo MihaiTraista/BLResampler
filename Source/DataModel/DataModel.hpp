@@ -96,6 +96,26 @@ public:
                                                                     mCycleLenHint);
     };
     
+    inline void exportFiles(){
+        pFileHandler->exportFiles(mOrigAudioData,
+                                  mResampledCycles,
+                                  mPolarCycles,
+                                  mResynthesizedCycles,
+                                  mOriginalFileName);
+    };
+    
+    inline void clearAllResampledAndResynthesized(){
+        mResampledCycles.clear();
+        mPolarCycles.clear();
+
+        for(int i = 0; i < N_WT_BANDS; i++){
+            mResynthesizedCycles[i].clear();
+        }
+
+        mVectorThatShowsWhichSamplesAreCommitted.assign(mVectorThatShowsWhichSamplesAreCommitted.size(), false);
+        mVectorThatShowsWhichSamplesAreCommitted.clear();
+    }
+    
     void commit();
     void performDFTandAppendResynthesizedCycleForAllBands(const std::vector<float>& resampledCycle);
 
