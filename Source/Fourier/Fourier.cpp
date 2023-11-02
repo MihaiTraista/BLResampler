@@ -50,8 +50,6 @@ void Fourier::idft(const std::vector<float>& polarValues,
             for (int h = 0; h < WTSIZE; h++) {   //  number of harmonics = WTSIZE
                 amp = polarValues[(h + cycleIndex * WTSIZE) * 2];
                 phase = polarValues[(h + cycleIndex * WTSIZE) * 2 + 1];
-                
-//                phase = -M_PI;
 
                 // roll off harmonics from startRolloff to harmonicLimit and zero out all higher harmonics
                 if (h < startRolloff){
@@ -72,46 +70,8 @@ void Fourier::idft(const std::vector<float>& polarValues,
     }
     
     applyLinearSlant(tempResynthesized, nCycles);
-//    float f1 = tempResynthesized[0];
-//    float f2 = tempResynthesized[1];
-//    float l1 = tempResynthesized[1022];
-//    float l2 = tempResynthesized[1023];
-//    l2 = 0.0f;
 
     resynthesized = tempResynthesized;
-}
-
-void Fourier::removeDCOffset(int bandIndex, std::vector<std::vector<float>>& blw){
-//    float firstVal = blw[bandIndex][cycleIndex * WTSIZE];
-//    float lastVal = blw[bandIndex][cycleIndex * WTSIZE + WTSIZE - 1];
-//    float midpoint = (firstVal + lastVal) / 2.0f;
-//    float offset = midpoint * -1.0f;
-//    for (int i = cycleIndex * WTSIZE; i < (cycleIndex + 1) * WTSIZE; i++){
-//        blw[bandIndex][i] += offset;
-//        assert(fabs(blw[bandIndex][i]) <= 1.0f && "Sample values can't exceed an amplitude of 1.0f");
-//    }
-}
-
-void Fourier::rotateWavetableToNearestZero(std::vector<float>& wt){
-    int dephaseIndex = 0;
-    float minAbsValue = std::fabs(wt[0]);
-    
-    // Find the index of the value closest to zero
-    for(int i = 1; i < WTSIZE; ++i){
-        float absValue = std::fabs(wt[i]);
-        if(absValue < minAbsValue){
-            minAbsValue = absValue;
-            dephaseIndex = i;
-        }
-    }
-
-    std::vector<float> rotatedWt(WTSIZE);
-
-    for(int i = 0; i < WTSIZE; ++i){
-        rotatedWt[i] = wt[(i + dephaseIndex) % WTSIZE];
-    }
-
-    wt = rotatedWt;
 }
 
 void Fourier::applyLinearSlant(std::vector<float>& waveform, int nCycles) {

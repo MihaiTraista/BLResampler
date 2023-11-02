@@ -17,10 +17,6 @@ public:
                      float rollOffPercent,
                      int nCycles);
     
-    static void removeDCOffset(int bandIndex, std::vector<std::vector<float>>& blw);
-    
-    static void rotateWavetableToNearestZero(std::vector<float>& wt);
-    
     static void applyLinearSlant(std::vector<float>& waveform, int nCycles);
 
 private:
