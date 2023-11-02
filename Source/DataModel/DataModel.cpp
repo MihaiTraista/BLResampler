@@ -10,9 +10,11 @@
 
 #include "DataModel.hpp"
 
-DataModel::DataModel(){
+DataModel::DataModel(std::function<void()> workerThreadFinishedJobCallbackRef):
+    workerThreadFinishedJobCallback(workerThreadFinishedJobCallbackRef)
+{
     for(auto& vec : mTempResynthesized)
-        vec = std::vector<float>(WTSIZE, 0.0f);
+        vec = std::vector<float>(WTSIZE, 0.0f);    
 }
 
 DataModel::~DataModel(){}
@@ -45,7 +47,7 @@ void DataModel::calculateZeroCrossingsAndUpdateVectors(){
 }
 
 void DataModel::commit(){
-
+    
     const float* mAudioBufferData = mOrigAudioData.data();
 
     int originalLengthOfCycle = mClosestZeroCrossingEnd - mClosestZeroCrossingStart;
@@ -68,34 +70,90 @@ void DataModel::commit(){
 
     mResampledCycles.insert(mResampledCycles.end(), mTempResampledCycle.begin(), mTempResampledCycle.end());
 
-    try {
-        performDFTandAppendResynthesizedCycleForAllBands();
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        juce::JUCEApplication::quit();
+    Task task;
+    
+    task.resampledCycle = mTempResampledCycle;
+    
+    {
+        std::lock_guard<std::mutex> lock(queueMutex);
+        taskQueue.push(task);
     }
+
+    startWorkerThread();
+
+//    try {
+//        performDFTandAppendResynthesizedCycleForAllBands();
+//    } catch (const std::exception& e) {
+//        std::cerr << e.what() << std::endl;
+//        juce::JUCEApplication::quit();
+//    }
 }
 
-void DataModel::performDFTandAppendResynthesizedCycleForAllBands(){
+void DataModel::startWorkerThread() {
     if (!isWorkerThreadBusy.load()) {
         isWorkerThreadBusy.store(true);
+        
         if (workerThread.joinable()) {
             workerThread.join();
         }
 
-        workerThread = std::thread([this]() {
-            Fourier::fill(mTempResampledCycle, mTempPolar, mTempResynthesized);
-            
-            for(int band = 0; band < N_WT_BANDS; band++){
-                mResynthesizedCycles[band].insert(mResynthesizedCycles[band].end(),
-                                                  mTempResynthesized[band].begin(),
-                                                  mTempResynthesized[band].end());
-            }
+        workerThread = std::thread(&DataModel::workerThreadFunction, this);
+    }
+}
 
-            mPolarCycles.insert(mPolarCycles.end(), mTempPolar.begin(), mTempPolar.end());
-            
-            isWorkerThreadBusy.store(false);
-        });
+void DataModel::workerThreadFunction() {
+    while (true) {
+        Task task;
+        
+        {
+            std::lock_guard<std::mutex> lock(queueMutex);
+            if (taskQueue.empty()) {
+                isWorkerThreadBusy.store(false);
+                return;
+            }
+            task = taskQueue.front();
+            taskQueue.pop();
+        }
+
+        performDFTandAppendResynthesizedCycleForAllBands(task.resampledCycle);
+        
+        workerThreadFinishedJobCallback();
+    }
+}
+
+
+void DataModel::performDFTandAppendResynthesizedCycleForAllBands(std::vector<float>& resampledCycle){
+    
+    Fourier::fill(resampledCycle, mTempPolar, mTempResynthesized);
+    
+    for(int band = 0; band < N_WT_BANDS; band++){
+        mResynthesizedCycles[band].insert(mResynthesizedCycles[band].end(),
+                                          mTempResynthesized[band].begin(),
+                                          mTempResynthesized[band].end());
+    }
+
+    mPolarCycles.insert(mPolarCycles.end(), mTempPolar.begin(), mTempPolar.end());
+
+    
+//    if (!isWorkerThreadBusy.load()) {
+//        isWorkerThreadBusy.store(true);
+//        if (workerThread.joinable()) {
+//            workerThread.join();
+//        }
+//
+//        workerThread = std::thread([this, resampledCycle]() {
+//            Fourier::fill(resampledCycle, mTempPolar, mTempResynthesized);
+//
+//            for(int band = 0; band < N_WT_BANDS; band++){
+//                mResynthesizedCycles[band].insert(mResynthesizedCycles[band].end(),
+//                                                  mTempResynthesized[band].begin(),
+//                                                  mTempResynthesized[band].end());
+//            }
+//
+//            mPolarCycles.insert(mPolarCycles.end(), mTempPolar.begin(), mTempPolar.end());
+//
+//            isWorkerThreadBusy.store(false);
+//        });
         
 //        workerThread = std::thread(&Fourier::fill,
 //                                   std::cref(mTempResampledCycle),
@@ -110,7 +168,7 @@ void DataModel::performDFTandAppendResynthesizedCycleForAllBands(){
 //        }
 //
 //        mPolarCycles.insert(mPolarCycles.end(), mTempPolar.begin(), mTempPolar.end());
-    } else {
-        throw std::runtime_error("!! ==> APP QUITTED ==>> Could not commit this cycles because the worker thread hasn't yet finished its job");
-    }
+//    } else {
+//        throw std::runtime_error("!! ==> APP QUITTED ==>> Could not commit this cycles because the worker thread hasn't yet finished its job");
+//    }
 }

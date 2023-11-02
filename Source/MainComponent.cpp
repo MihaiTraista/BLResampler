@@ -2,6 +2,7 @@
 
 //==============================================================================
 MainComponent::MainComponent():
+    mDataModel([this](){ this->workerThreadFinishedJobCallback(); }),
     mUI(this,
         mDataModel.getReferenceForOrigAudioDataVector(),
         mDataModel.getReferenceForZeroCrossingsVector(),
@@ -93,7 +94,7 @@ void MainComponent::resized()
 bool MainComponent::keyPressed(const juce::KeyPress& key, Component* originatingComponent){
     if (key.getTextCharacter() == 'C' || key.getTextCharacter() == 'c')
     {
-        handleCommitButton();
+        mUI.triggerClickCommitButton();
         return true;
     } else if (key.getTextCharacter() == 'H' || key.getTextCharacter() == 'h'){
         mUI.triggerClickPrevCycleButton();
@@ -165,11 +166,10 @@ void MainComponent::updateVectors(){
 
 void MainComponent::handleCommitButton(){
     mDataModel.commit();
-
+    
     mUI.setRangeOfResampledZoomSlider(mDataModel.getSizeOfResampledCycles() / WTSIZE);
     updateLengthInfoLabel();
     mUI.setEventConfirmationLabelTextAndVisibility("Cycle Committed!", true);
-
     repaint();
 }
 

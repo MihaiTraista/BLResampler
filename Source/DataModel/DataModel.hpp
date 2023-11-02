@@ -21,11 +21,14 @@
 #include "../ZeroCrossingFinder/ZeroCrossingFinder.hpp"
 #include "../Fourier/Fourier.hpp"
 
+struct Task {
+    std::vector<float> resampledCycle;
+};
 
 class DataModel
 {
 public:
-    DataModel();
+    DataModel(std::function<void()>);
     ~DataModel();
         
     //  SETTERS
@@ -81,7 +84,7 @@ public:
                 resampledCycle[i] = mResampledCycles[cycleIndex * WTSIZE + i];
             }
 
-            performDFTandAppendResynthesizedCycleForAllBands();
+            performDFTandAppendResynthesizedCycleForAllBands(resampledCycle);
         }
 
         return static_cast<int>(nCycles);
@@ -118,9 +121,12 @@ public:
     }
     
     void commit();
-    void performDFTandAppendResynthesizedCycleForAllBands();
+    void performDFTandAppendResynthesizedCycleForAllBands(std::vector<float>& resampledCycle);
 
 private:
+    void startWorkerThread();
+    void workerThreadFunction();
+
     int mStartSampleIndex = 0;
     int mCycleLenHint = DEFAULT_CYCLE_LEN_HINT;
     int mClosestZeroCrossingStart = 0;
@@ -149,6 +155,11 @@ private:
     std::vector<float> mTempResampledCycle = std::vector<float>(WTSIZE, 0.0f);
     std::vector<float> mTempPolar = std::vector<float>(WTSIZE * 2, 0.0f);
     std::array<std::vector<float>, N_WT_BANDS> mTempResynthesized;
+    
+    std::queue<Task> taskQueue;
+    std::mutex queueMutex;
+    
+    std::function<void()> workerThreadFinishedJobCallback;
 };
 
 

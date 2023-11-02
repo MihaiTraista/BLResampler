@@ -43,6 +43,18 @@ public:
     // a reference to this function will be sent to the DragDropArea child components
     void newFileWasDropped(juce::File audioFile, bool isResampled);
     
+    // a reference to this function will be passed to the worker thread which will inform us when it finished a job
+    void workerThreadFinishedJobCallback(){
+        // you could update the UI here, but
+        // you need to use a MessageManagerLock object to make sure it's thread-safe
+        // for now we update the UI directly in handleCommitButton()
+        
+//        mUI.setRangeOfResampledZoomSlider(mDataModel.getSizeOfResynthesizedCycles() / WTSIZE);
+//        updateLengthInfoLabel();
+//        mUI.setEventConfirmationLabelTextAndVisibility("Cycle Committed!", true);
+//        repaint();
+    };
+    
     void handleSliderValueChanged(juce::Slider* slider) override;
     void handleButtonClicked(juce::Button* button) override;
     void handleComboBoxChanged(juce::ComboBox* box) override;

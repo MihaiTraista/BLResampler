@@ -128,6 +128,7 @@ public:
     inline void triggerClickNextSampleButton(){ mNextSampleButton.triggerClick(); };
     inline void triggerClickModeResampled(){ mModeResampledButton.triggerClick(); };
     inline void triggerClickModeOrig(){ mModeOrigButton.triggerClick(); };
+    inline void triggerClickCommitButton(){ mCommitButton.triggerClick(); };
 
     // ZOOM
     inline void zoomOutOneUnit(){
