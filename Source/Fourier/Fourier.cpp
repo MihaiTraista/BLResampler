@@ -6,6 +6,28 @@
 #include "Fourier.hpp"
 
 
+void Fourier::fill(const std::vector<float>& resampledCycle,
+                   std::vector<float>& polar,
+                   std::array<std::vector<float>, N_WT_BANDS>& resynthesized){
+
+    std::array<std::vector<float>, N_WT_BANDS> resynthesizedWorker;
+    for(auto& vec : resynthesizedWorker)
+        vec = std::vector<float>(WTSIZE, 0.0f);
+
+    Fourier::fillDftPolar(resampledCycle, polar);
+    
+    for(int band = 0; band < N_WT_BANDS; band++){
+        float harmonicsLimit = 22050.0f / baseFrequencies[band];
+        float rollOffPercent = 50.0f;
+
+        Fourier::idft(polar, resynthesizedWorker[band], harmonicsLimit, rollOffPercent, 1);
+    }
+    
+//    isWorkerThreadBusy.store(false);
+    std::swap(resynthesized, resynthesizedWorker);
+}
+
+
 void Fourier::fillDftPolar(const std::vector<float>& rawWavetable, std::vector<float>& polarValues){
     float realImag[WTSIZE * 2], real, imag;
 

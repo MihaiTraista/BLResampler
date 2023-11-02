@@ -10,7 +10,10 @@
 
 #include "DataModel.hpp"
 
-DataModel::DataModel(){}
+DataModel::DataModel(){
+    for(auto& vec : mTempResynthesized)
+        vec = std::vector<float>(WTSIZE, 0.0f);
+}
 
 DataModel::~DataModel(){}
 
@@ -42,6 +45,7 @@ void DataModel::calculateZeroCrossingsAndUpdateVectors(){
 }
 
 void DataModel::commit(){
+
     const float* mAudioBufferData = mOrigAudioData.data();
 
     int originalLengthOfCycle = mClosestZeroCrossingEnd - mClosestZeroCrossingStart;
@@ -60,31 +64,53 @@ void DataModel::commit(){
         origCycle[i] = mAudioBufferData[i + mClosestZeroCrossingStart];
     }
 
-    // create the three temp vectors
-    std::vector<float> resampled = std::vector<float>(WTSIZE, 0.0f);
+    pResampler->resizeCycle(origCycle, mTempResampledCycle);
 
-    pResampler->resizeCycle(origCycle, resampled);
+    mResampledCycles.insert(mResampledCycles.end(), mTempResampledCycle.begin(), mTempResampledCycle.end());
 
-    mResampledCycles.insert(mResampledCycles.end(), resampled.begin(), resampled.end());
-
-    performDFTandAppendResynthesizedCycleForAllBands(resampled);
+    try {
+        performDFTandAppendResynthesizedCycleForAllBands();
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        juce::JUCEApplication::quit();
+    }
 }
 
-void DataModel::performDFTandAppendResynthesizedCycleForAllBands(const std::vector<float>& resampledCycle){
-    std::vector<float> polarValues = std::vector<float>(WTSIZE * 2, 0.0f);
-    std::vector<float> resynthesized = std::vector<float>(WTSIZE, 0.0f);
+void DataModel::performDFTandAppendResynthesizedCycleForAllBands(){
+    if (!isWorkerThreadBusy.load()) {
+        isWorkerThreadBusy.store(true);
+        if (workerThread.joinable()) {
+            workerThread.join();
+        }
 
-    Fourier::fillDftPolar(resampledCycle, polarValues);
+        workerThread = std::thread([this]() {
+            Fourier::fill(mTempResampledCycle, mTempPolar, mTempResynthesized);
+            
+            for(int band = 0; band < N_WT_BANDS; band++){
+                mResynthesizedCycles[band].insert(mResynthesizedCycles[band].end(),
+                                                  mTempResynthesized[band].begin(),
+                                                  mTempResynthesized[band].end());
+            }
 
-    // harmonicsLimit = 512 because Niquist(22050) / freq(43) = 512 (1024 samples is 43 Hz)
-
-    for(int band = 0; band < N_WT_BANDS; band++){
-        float harmonicsLimit = 22050.0f / baseFrequencies[band];
-
-        Fourier::idft(polarValues, resynthesized, harmonicsLimit, 50.0f, 1);
-
-        mResynthesizedCycles[band].insert(mResynthesizedCycles[band].end(), resynthesized.begin(), resynthesized.end());
+            mPolarCycles.insert(mPolarCycles.end(), mTempPolar.begin(), mTempPolar.end());
+            
+            isWorkerThreadBusy.store(false);
+        });
+        
+//        workerThread = std::thread(&Fourier::fill,
+//                                   std::cref(mTempResampledCycle),
+//                                   std::ref(mTempPolar),
+//                                   std::ref(mTempResynthesized),
+//                                   std::ref(isWorkerThreadBusy));
+//
+//        for(int band = 0; band < N_WT_BANDS; band++){
+//            mResynthesizedCycles[band].insert(mResynthesizedCycles[band].end(),
+//                                              mTempResynthesized[band].begin(),
+//                                              mTempResynthesized[band].end());
+//        }
+//
+//        mPolarCycles.insert(mPolarCycles.end(), mTempPolar.begin(), mTempPolar.end());
+    } else {
+        throw std::runtime_error("!! ==> APP QUITTED ==>> Could not commit this cycles because the worker thread hasn't yet finished its job");
     }
-
-    mPolarCycles.insert(mPolarCycles.end(), polarValues.begin(), polarValues.end());
 }

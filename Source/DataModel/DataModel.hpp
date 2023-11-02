@@ -21,6 +21,7 @@
 #include "../ZeroCrossingFinder/ZeroCrossingFinder.hpp"
 #include "../Fourier/Fourier.hpp"
 
+
 class DataModel
 {
 public:
@@ -80,7 +81,7 @@ public:
                 resampledCycle[i] = mResampledCycles[cycleIndex * WTSIZE + i];
             }
 
-            performDFTandAppendResynthesizedCycleForAllBands(resampledCycle);
+            performDFTandAppendResynthesizedCycleForAllBands();
         }
 
         return static_cast<int>(nCycles);
@@ -117,7 +118,7 @@ public:
     }
     
     void commit();
-    void performDFTandAppendResynthesizedCycleForAllBands(const std::vector<float>& resampledCycle);
+    void performDFTandAppendResynthesizedCycleForAllBands();
 
 private:
     int mStartSampleIndex = 0;
@@ -139,6 +140,15 @@ private:
     std::unique_ptr<FileHandler> pFileHandler = std::make_unique<FileHandler>();
     std::unique_ptr<Resampler> pResampler = std::make_unique<Resampler>();
     std::unique_ptr<ZeroCrossingFinder> pZeroCrossingFinder = std::make_unique<ZeroCrossingFinder>();
+    
+    std::vector<float> mWT = std::vector<float>(WTSIZE, 0.0f);
+    std::vector<float> mBLWT = std::vector<float>(WTSIZE, 0.0f);
+    
+    std::atomic<bool> isWorkerThreadBusy = false;
+    std::thread workerThread;
+    std::vector<float> mTempResampledCycle = std::vector<float>(WTSIZE, 0.0f);
+    std::vector<float> mTempPolar = std::vector<float>(WTSIZE * 2, 0.0f);
+    std::array<std::vector<float>, N_WT_BANDS> mTempResynthesized;
 };
 
 
