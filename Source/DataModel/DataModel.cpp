@@ -81,12 +81,6 @@ void DataModel::commit(){
 
     startWorkerThread();
 
-//    try {
-//        performDFTandAppendResynthesizedCycleForAllBands();
-//    } catch (const std::exception& e) {
-//        std::cerr << e.what() << std::endl;
-//        juce::JUCEApplication::quit();
-//    }
 }
 
 void DataModel::startWorkerThread() {
@@ -134,41 +128,4 @@ void DataModel::performDFTandAppendResynthesizedCycleForAllBands(std::vector<flo
 
     mPolarCycles.insert(mPolarCycles.end(), mTempPolar.begin(), mTempPolar.end());
 
-    
-//    if (!isWorkerThreadBusy.load()) {
-//        isWorkerThreadBusy.store(true);
-//        if (workerThread.joinable()) {
-//            workerThread.join();
-//        }
-//
-//        workerThread = std::thread([this, resampledCycle]() {
-//            Fourier::fill(resampledCycle, mTempPolar, mTempResynthesized);
-//
-//            for(int band = 0; band < N_WT_BANDS; band++){
-//                mResynthesizedCycles[band].insert(mResynthesizedCycles[band].end(),
-//                                                  mTempResynthesized[band].begin(),
-//                                                  mTempResynthesized[band].end());
-//            }
-//
-//            mPolarCycles.insert(mPolarCycles.end(), mTempPolar.begin(), mTempPolar.end());
-//
-//            isWorkerThreadBusy.store(false);
-//        });
-        
-//        workerThread = std::thread(&Fourier::fill,
-//                                   std::cref(mTempResampledCycle),
-//                                   std::ref(mTempPolar),
-//                                   std::ref(mTempResynthesized),
-//                                   std::ref(isWorkerThreadBusy));
-//
-//        for(int band = 0; band < N_WT_BANDS; band++){
-//            mResynthesizedCycles[band].insert(mResynthesizedCycles[band].end(),
-//                                              mTempResynthesized[band].begin(),
-//                                              mTempResynthesized[band].end());
-//        }
-//
-//        mPolarCycles.insert(mPolarCycles.end(), mTempPolar.begin(), mTempPolar.end());
-//    } else {
-//        throw std::runtime_error("!! ==> APP QUITTED ==>> Could not commit this cycles because the worker thread hasn't yet finished its job");
-//    }
 }
