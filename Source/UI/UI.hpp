@@ -67,6 +67,10 @@ public:
         mResampledZoomSlider.setRange(0, newMaxValue, 1);
         mResampledZoomSlider.setMaxValue(newMaxValue, juce::dontSendNotification);
     };
+    
+    inline void setResampledZoomSliderMaxValue(int val){
+        mResampledZoomSlider.setMaxValue(val);
+    };
 
     inline void setEventConfirmationLabelTextAndVisibility(const juce::String& newText, bool isVisible) {
         mEventConfirmationLabel.setText(newText, juce::dontSendNotification);

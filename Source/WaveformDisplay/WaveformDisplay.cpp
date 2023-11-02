@@ -111,7 +111,9 @@ void WaveformDisplay::drawWaveformSampleBySample(juce::Graphics& g,
         float topCoordinate = sampleValue >= 0.0f ? (1.0f - (sampleValue * 0.5f + 0.5f)) * height : height / 2.0f;
         float bottomCoordinate = sampleValue >= 0.0f ? height / 2.0f : (1.0f - (sampleValue * 0.5f + 0.5f)) * height;
         
-        if (pVectorThatShowsWhichSamplesAreCommitted && (*pVectorThatShowsWhichSamplesAreCommitted)[sampleIndex]){
+        if (mShowZeroCrossings &&
+            pVectorThatShowsWhichSamplesAreCommitted &&
+            (*pVectorThatShowsWhichSamplesAreCommitted)[sampleIndex]){
             g.setColour(juce::Colour::fromRGB(120, 120, 110));
         } else {
             g.setColour(juce::Colour::fromRGB(220, 220, 200));

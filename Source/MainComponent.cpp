@@ -258,8 +258,22 @@ void MainComponent::handleButtonClicked(juce::Button* button) {
             return;
         mDataModel.deleteLastCycle();
         
-        mUI.updateLengthInfoLabel(mDataModel.getSizeOfResampledCycles());
-        mUI.setRangeOfResampledZoomSlider(mDataModel.getSizeOfResampledCycles() / WTSIZE);
+        int newLenght = mDataModel.getSizeOfResampledCycles();
+        
+        mUI.updateLengthInfoLabel(newLenght);
+        mUI.setRangeOfResampledZoomSlider(newLenght / WTSIZE);
+        mUI.setResampledZoomSliderMaxValue(newLenght / WTSIZE);
+        
+        int minVal = mUI.getResampledZoomSliderMin();
+        int maxVal = mUI.getResampledZoomSliderMax();
+        int differenceVal = maxVal - minVal;
+        
+        mUI.setLargeWaveformStart(minVal * WTSIZE);
+        mUI.setLargeWaveformLength(differenceVal * WTSIZE);
+        
+        pPlayback->setReadingStart(minVal * WTSIZE);
+        pPlayback->setReadingLength(differenceVal * WTSIZE);
+        
         mUI.setEventConfirmationLabelTextAndVisibility("Cycle Deleted!", true);
         repaint();
     } else if (id == "mPlayButton"){
