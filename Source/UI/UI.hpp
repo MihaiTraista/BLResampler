@@ -58,8 +58,9 @@ public:
             mStartSampleIndexSlider.setValue(newRange / 2, juce::sendNotification);
     };
     
-    inline void setTextForResampledLengthLabel(juce::String newText){
-        mResampledLengthLabel.setText(newText, juce::dontSendNotification);
+    inline void updateLengthInfoLabel(int len){
+        juce::String labelText = "Resampled Buffer Length: " + juce::String(len) + " samples, " + juce::String(len / static_cast<float>(WTSIZE)) + " cycles";
+        mResampledLengthLabel.setText(labelText, juce::dontSendNotification);
     };
     
     inline void setRangeOfResampledZoomSlider(int newMaxValue) {

@@ -61,7 +61,6 @@ public:
 
 private:
     void addSlidersButtonsAndLabels();
-    void updateLengthInfoLabel();
     void handleCommitButton();
     void updateVectors();
     

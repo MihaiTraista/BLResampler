@@ -92,8 +92,14 @@ void MainComponent::resized()
 }
 
 bool MainComponent::keyPressed(const juce::KeyPress& key, Component* originatingComponent){
-    if (key.getTextCharacter() == 'C' || key.getTextCharacter() == 'c')
+    std::cout << key.getTextCharacter() << std::endl;
+    
+    if (key.getTextCharacter() == 'c')
     {
+        mUI.triggerClickCommitButton();
+        return true;
+    }else if(key.getTextCharacter() == 'C'){
+        mUI.triggerClickNextCycleButton();
         mUI.triggerClickCommitButton();
         return true;
     } else if (key.getTextCharacter() == 'H' || key.getTextCharacter() == 'h'){
@@ -127,7 +133,8 @@ void MainComponent::newFileWasDropped(juce::File audioFile, bool isResampled){
         int nCycles = mDataModel.clearVectorsAndResynthesizeAllCycles();
         
         mUI.setRangeOfResampledZoomSlider(nCycles);
-        updateLengthInfoLabel();
+        
+        mUI.updateLengthInfoLabel(mDataModel.getSizeOfResampledCycles());
         
         mUI.triggerClickModeResampled();
         
@@ -143,12 +150,6 @@ void MainComponent::newFileWasDropped(juce::File audioFile, bool isResampled){
     }
 
     repaint();
-}
-
-void MainComponent::updateLengthInfoLabel(){
-    int len = mDataModel.getSizeOfResampledCycles();
-    juce::String labelText = "Resampled Buffer Length: " + juce::String(len) + " samples, " + juce::String(len / static_cast<float>(WTSIZE)) + " cycles";
-    mUI.setTextForResampledLengthLabel(labelText);
 }
 
 void MainComponent::updateVectors(){
@@ -168,7 +169,7 @@ void MainComponent::handleCommitButton(){
     mDataModel.commit();
     
     mUI.setRangeOfResampledZoomSlider(mDataModel.getSizeOfResampledCycles() / WTSIZE);
-    updateLengthInfoLabel();
+    mUI.updateLengthInfoLabel(mDataModel.getSizeOfResampledCycles());
     mUI.setEventConfirmationLabelTextAndVisibility("Cycle Committed!", true);
     repaint();
 }
@@ -247,7 +248,7 @@ void MainComponent::handleButtonClicked(juce::Button* button) {
     } else if (id == "mClearButton"){
         mDataModel.clearAllResampledAndResynthesized();
 
-        updateLengthInfoLabel();
+        mUI.updateLengthInfoLabel(0);
 
         mUI.triggerClickModeOrig();
 
@@ -322,10 +323,11 @@ void MainComponent::handleButtonClicked(juce::Button* button) {
 
 
 void MainComponent::handleComboBoxChanged(juce::ComboBox* box) {
-//    if (box == &mCycleLengthComboBox)
-//    {
-//        int newValue = box->getText().getIntValue();
-//        std::cout << "New WTSIZE = " << newValue << std::endl;
-//        WTSIZE = newValue;
-//    }
+    juce::String id = box->getComponentID();
+    if (id == "mCycleLengthComboBox")
+    {
+        int newValue = box->getText().getIntValue();
+        std::cout << "New WTSIZE = " << newValue << std::endl;
+        WTSIZE = newValue;
+    }
 }
