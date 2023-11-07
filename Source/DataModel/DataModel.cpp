@@ -129,3 +129,4 @@ void DataModel::performDFTandAppendResynthesizedCycleForAllBands(std::vector<flo
     mPolarCycles.insert(mPolarCycles.end(), mTempPolar.begin(), mTempPolar.end());
 
 }
+

@@ -53,7 +53,7 @@ public:
 
     // SETTERS
     inline void setRangeOfStartSampleIndexSlider(int newRange, bool shouldGetValueToHalfTheRange){
-        mStartSampleIndexSlider.setRange(0, newRange);
+        mStartSampleIndexSlider.setRange(0, newRange >= 1 ? newRange : 1);
         if(shouldGetValueToHalfTheRange)
             mStartSampleIndexSlider.setValue(newRange / 2, juce::sendNotification);
     };

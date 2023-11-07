@@ -62,6 +62,10 @@ public:
         
         pFileHandler->readAudioFileAndCopyToVector(audioFile, mOrigAudioData);
     };
+    
+    inline void storeDefaultCelloBinaryFileInOrigAudioData(){
+        pFileHandler->storeDefaultCelloBinaryFileInOrigAudioData(mOrigAudioData);
+    }
 
     inline void readFileAndStoreDataInResampledCycles(juce::File audioFile){
         pFileHandler->readAudioFileAndCopyToVector(audioFile, mResampledCycles);

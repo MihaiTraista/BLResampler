@@ -186,3 +186,32 @@ void FileHandler::saveVectorAsTextFileOnDesktop(std::vector<float>& vector, juce
     // Close the output stream
     outputStream.flush();
 }
+
+void FileHandler::storeDefaultCelloBinaryFileInOrigAudioData(std::vector<float>& audioVector){
+    auto* data = BinaryData::Cello_C2_short_wav;
+    int dataSize = BinaryData::Cello_C2_short_wavSize;
+    
+    // Create an InputStream to read from the binary data
+    std::unique_ptr<juce::MemoryInputStream> inputStream(new juce::MemoryInputStream(data, dataSize, false));
+
+    // Create a format manager and use it to create the reader
+    juce::AudioFormatManager formatManager;
+    formatManager.registerBasicFormats(); // Registers the basic formats, e.g., WAV, AIFF
+
+    // Now you can use this inputStream to read the audio file as if it were a file on the disk
+    std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(std::move(inputStream)));
+
+    // Use the reader as needed, for example, to load the audio into an AudioBuffer
+    if (reader != nullptr) {
+        juce::AudioBuffer<float> buffer(reader->numChannels, static_cast<int>(reader->lengthInSamples));
+        reader->read(&buffer, 0, static_cast<int>(reader->lengthInSamples), 0, true, true);
+        
+        int audioFileLengthInSamples = buffer.getNumSamples();
+        
+        audioVector.resize(audioFileLengthInSamples);
+        const float* bufferData = buffer.getReadPointer(0);
+        for(int i = 0; i < audioFileLengthInSamples; i++){
+            audioVector[i] = bufferData[i];
+        }
+    }
+}

@@ -24,15 +24,7 @@ MainComponent::MainComponent():
     setWantsKeyboardFocus (true);
     addKeyListener(this);
     
-    // read audio file and display waveform
-    // /Users/mihaitraista/5.Sound Libraries/fl1.wav
-    // /Users/mihaitraista/4.Projects/Coding/JUCE/CycleChopper/Resources/Cello_C2_1.wav
-    // /Users/mihaitraista/4.Projects/Coding/JUCE/WebTenori/Resources/ForResampling/Flute-Long.wav
-    // /Users/mihaitraista/4.Projects/Coding/JUCE/CycleChopper/Resources/Cello_C2_1.wav
-    
-    juce::File defaultFile = juce::File("/Users/mihaitraista/4.Projects/Coding/JUCE/CycleChopper/Resources/Cello_C2_1.wav");
-
-    mDataModel.readFileAndStoreDataInOrigAudioData(defaultFile);
+    mDataModel.storeDefaultCelloBinaryFileInOrigAudioData();
     
     updateVectors();
     

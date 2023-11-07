@@ -38,6 +38,7 @@ public:
                                    const juce::String fileName);
     
     void saveVectorAsTextFileOnDesktop(std::vector<float>& vector, juce::String fileName);
+    void storeDefaultCelloBinaryFileInOrigAudioData(std::vector<float>& audioVector);
 
 private:
     void normalizeAudioVector(std::vector<float>& audioData);

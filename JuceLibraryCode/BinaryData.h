@@ -8,11 +8,14 @@
 
 namespace BinaryData
 {
+    extern const char*   Cello_C2_short_wav;
+    const int            Cello_C2_short_wavSize = 166826;
+
     extern const char*   BLResampler_Title2_png;
     const int            BLResampler_Title2_pngSize = 16061;
 
     // Number of elements in the namedResourceList and originalFileNames arrays.
-    const int namedResourceListSize = 1;
+    const int namedResourceListSize = 2;
 
     // Points to the start of a list of resource names.
     extern const char* namedResourceList[];

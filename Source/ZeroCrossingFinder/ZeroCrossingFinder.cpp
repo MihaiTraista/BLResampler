@@ -52,6 +52,9 @@ void ZeroCrossingFinder::findClosestZeroCrossingsToCycleLenHint(const std::vecto
                                                                 int& mClosestZeroCrossingEnd,
                                                                 const int& mStartSampleIndex,
                                                                 const int& mCycleLenHint){
+    if(mZeroCrossings.size() == 0)
+        return;
+    
     int startOfDisplay = mStartSampleIndex;
     int endofDisplay = mCycleLenHint * 2 + mStartSampleIndex;
     int rangeOfDisplay = endofDisplay - startOfDisplay;

@@ -4,6 +4,8 @@
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
   <MAINGROUP id="LyixqN" name="BLResampler">
     <GROUP id="{3324218E-154D-AEEC-5682-61EC5D1DF168}" name="Resources">
+      <FILE id="p7ggIu" name="Cello_C2_short.wav" compile="0" resource="1"
+            file="Resources/Cello_C2_short.wav"/>
       <FILE id="CzlgAq" name="BLResampler_Title2.png" compile="0" resource="1"
             file="Resources/BLResampler_Title2.png"/>
     </GROUP>
