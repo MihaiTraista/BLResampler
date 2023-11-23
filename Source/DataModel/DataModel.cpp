@@ -17,7 +17,16 @@ DataModel::DataModel(std::function<void()> workerThreadFinishedJobCallbackRef):
         vec = std::vector<float>(WTSIZE, 0.0f);    
 }
 
-DataModel::~DataModel(){}
+DataModel::~DataModel(){
+    // Stop the worker thread safely
+    if (workerThread.joinable()) {
+        // Signal the worker thread to stop, for example by setting a flag
+        isWorkerThreadBusy = false;
+
+        // Join the thread
+        workerThread.join();
+    }
+}
 
 void DataModel::calculateZeroCrossingsAndUpdateVectors(){
     mClosestZeroCrossingStart = 0;
