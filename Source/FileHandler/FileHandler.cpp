@@ -55,10 +55,11 @@ void FileHandler::readAudioFileAndCopyToVector(juce::File& audioFile, std::vecto
 }
 
 void FileHandler::exportFiles(const std::vector<float>& origAudioData,
-                            const std::vector<float>& resampledCycles,
-                            const std::vector<float>& polarCycles,
-                            const std::array<std::vector<float>, N_WT_BANDS>& resynthesizedCycles,
-                            const juce::String exportFolderName)
+                              const std::vector<float>& resampledCycles,
+                              const std::vector<float>& polarCycles,
+                              const std::vector<float>& ampOfOriginalCycles,
+                              const std::array<std::vector<float>, N_WT_BANDS>& resynthesizedCycles,
+                              const juce::String exportFolderName)
 {
     // Get the user's desktop directory
     juce::File desktop = juce::File::getSpecialLocation(juce::File::userDesktopDirectory);
@@ -78,6 +79,7 @@ void FileHandler::exportFiles(const std::vector<float>& origAudioData,
     saveMonoAudioFile(origAudioData, folderOfThisExport, "original");
     saveMonoAudioFile(resampledCycles, folderOfThisExport, "resampled");
     saveMonoAudioFile(polarCycles, folderOfThisExport, "polar");
+    saveMonoAudioFile(ampOfOriginalCycles, folderOfThisExport, "amp_of_original_cycles");
     saveMultiChannelAudioFile(resynthesizedCycles, folderOfThisExport, "resynthesized");
 }
 

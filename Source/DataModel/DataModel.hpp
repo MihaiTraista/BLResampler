@@ -120,6 +120,7 @@ public:
         pFileHandler->exportFiles(mOrigAudioData,
                                   mResampledCycles,
                                   mPolarCycles,
+                                  mAmpOfOriginalCycles,
                                   mResynthesizedCycles,
                                   mOriginalFileName);
     };
@@ -155,9 +156,10 @@ private:
     std::vector<float> mOrigAudioData;
     std::vector<float> mResampledCycles;
     std::vector<float> mPolarCycles;
+    std::vector<float> mAmpOfOriginalCycles;
     std::array<std::vector<float>, N_WT_BANDS> mResynthesizedCycles;
     
-    juce::String mOriginalFileName;
+    juce::String mOriginalFileName = "no_name";
     
     std::unique_ptr<FileHandler> pFileHandler = std::make_unique<FileHandler>();
     std::unique_ptr<Resampler> pResampler = std::make_unique<Resampler>();

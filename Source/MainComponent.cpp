@@ -134,7 +134,13 @@ void MainComponent::newFileWasDropped(juce::File audioFile, bool isResampled){
     } else {
         mDataModel.readFileAndStoreDataInOrigAudioData(audioFile);
 
-        mDataModel.setOrigFileName(audioFile.getFileName());
+        juce::String fileName = audioFile.getFileName();
+        
+        if (fileName.endsWith(".wav")) {
+            fileName = fileName.substring(0, fileName.length() - 4);
+        }
+        
+        mDataModel.setOrigFileName(fileName);
 
         updateVectors();
         

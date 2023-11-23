@@ -26,6 +26,7 @@ public:
     void exportFiles(const std::vector<float>& origAudioData,
                      const std::vector<float>& resampledCycles,
                      const std::vector<float>& polarCycles,
+                     const std::vector<float>& ampOfOriginalCycles,
                      const std::array<std::vector<float>, N_WT_BANDS>& resynthesizedCycles,
                      const juce::String exportFolderName);
 

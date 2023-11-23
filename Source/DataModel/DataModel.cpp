@@ -71,12 +71,22 @@ void DataModel::commit(){
 
     // make a temp origCycle and copy the sampled from orig file
     std::vector<float> origCycle(originalLengthOfCycle, 0.0f);
+    float maxAmp = 0.0f;
+
     for(int i = 0; i < originalLengthOfCycle; ++i){
-        origCycle[i] = mAudioBufferData[i + mClosestZeroCrossingStart];
+        float val = mAudioBufferData[i + mClosestZeroCrossingStart];
+        origCycle[i] = val;
+        maxAmp = std::max(fabs(val), maxAmp);
     }
+    
+    float gainNormalizer = (1.0f / maxAmp) * 0.9f;
+    for (float& sample : origCycle)
+        sample *= gainNormalizer;
+
+    mAmpOfOriginalCycles.insert(mAmpOfOriginalCycles.end(), WTSIZE, maxAmp);
 
     pResampler->resizeCycle(origCycle, mTempResampledCycle);
-
+    
     mResampledCycles.insert(mResampledCycles.end(), mTempResampledCycle.begin(), mTempResampledCycle.end());
 
     Task task;
