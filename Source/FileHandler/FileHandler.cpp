@@ -73,7 +73,14 @@ void FileHandler::exportFiles(const std::vector<float>& origAudioData,
     if (!folderBLResampler.exists())
         folderBLResampler.createDirectory();
 
-    juce::File folderOfThisExport = folderBLResampler.getChildFile(exportFolderName + "--" + timeString);
+    int nCycles = static_cast<int>(resampledCycles.size()) / WTSIZE;
+    juce::String numberOfCyclesString = juce::String(nCycles) + juce::String("_cycles");
+    
+    juce::File folderOfThisExport = folderBLResampler.getChildFile(exportFolderName +
+                                                                   "-" +
+                                                                   numberOfCyclesString +
+                                                                   "--" +
+                                                                   timeString);
     folderOfThisExport.createDirectory();
 
     saveMonoAudioFile(origAudioData, folderOfThisExport, "original");
