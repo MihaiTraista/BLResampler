@@ -17,7 +17,7 @@ MainComponent::MainComponent():
 
     pPlayback(std::make_unique<Playback>(mDataModel.getReferenceForOrigAudioDataVector(), 0, 0))
 {
-    setSize (800, 600);
+    setSize (1200, 800);
 
     // Enable drag-and-drop
     setInterceptsMouseClicks (true, true);

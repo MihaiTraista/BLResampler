@@ -6,8 +6,8 @@
 #include <complex>
 
 #include "../Globals/Globals.hpp"
-#include "../JuriHock/FFT.h"
-#include "../JuriHock/RFFT.h"
+#include "JuriHock/FFT.h"
+#include "JuriHock/RFFT.h"
 
 class Fourier{
 public:

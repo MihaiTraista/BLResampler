@@ -1,3 +1,16 @@
+/*
+  ==============================================================================
+
+    RFFT.hpp
+    Created: 2023
+    Author:  Jürgen Hock (jurihock)
+ 
+    MIT licence
+    https://github.com/jurihock/stftPitchShift
+
+  ==============================================================================
+*/
+
 #pragma once
 
 #include "FFT.h"

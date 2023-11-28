@@ -110,9 +110,9 @@ void UI::resized()
 {
     float aAreaY = 0;
     float bAreaY = 150;
-    float cAreaY = 550;
+    float cAreaY = getHeight() - 50;
     float aAreaHeight = 150;
-    float bAreaHeight = 400;
+    float bAreaHeight = getHeight() - 50 - 150;
     float cAreaHeight = 50;
     float width = getWidth();
     float gap = 5;
@@ -144,21 +144,22 @@ void UI::resized()
     mStartSampleIndexSlider.setBounds(0, cAreaY, width, cAreaHeight);
 
     // Commit, Save, Clear, Delete
-    mCommitButton.setBounds(553, buttonsYOffset, 58, 30);
-    mSaveButton.setBounds(613, buttonsYOffset, 58, 30);
-    mClearButton.setBounds(673, buttonsYOffset, 58, 30);
-    mDeleteButton.setBounds(733, buttonsYOffset, 58, 30);
+    int xOff = 400;
+    mCommitButton.setBounds(xOff + 553, buttonsYOffset, 58, 30);
+    mSaveButton.setBounds(xOff + 613, buttonsYOffset, 58, 30);
+    mClearButton.setBounds(xOff + 673, buttonsYOffset, 58, 30);
+    mDeleteButton.setBounds(xOff + 733, buttonsYOffset, 58, 30);
     
-    mCycleLengthComboBox.setBounds(673, buttonsYOffset + 32, 58 + 58 + 2, 20);
+    mCycleLengthComboBox.setBounds(xOff + 673, buttonsYOffset + 32, 58 + 58 + 2, 20);
     
     mEventConfirmationLabel.setBounds(0, bAreaY, width, 16);
-    mResampledLengthLabel.setBounds(280, cAreaY - 10, width - 300, 10);
+    mResampledLengthLabel.setBounds(getWidth() - 200, cAreaY - 10, width - 300, 10);
 //    mInstructionsLabel.setBounds(10, 40, getWidth(), getHeight());
 
-    mPlayButton.setBounds(360, buttonsYOffset, 80, 50);
+    mPlayButton.setBounds(getWidth() / 2 - 40, buttonsYOffset, 80, 50);
     
-    mDragDropAreaOriginal.setBounds(553, buttonsYOffset - 45, 116, 40);
-    mDragDropAreaResampled.setBounds(673, buttonsYOffset - 45, 116, 40);
+    mDragDropAreaOriginal.setBounds(xOff + 553, buttonsYOffset - 45, 116, 40);
+    mDragDropAreaResampled.setBounds(xOff + 673, buttonsYOffset - 45, 116, 40);
 }
 
 void UI::addSlidersButtonsAndLabels(int sizeOfOrigAudioData, int cycleLenHint){
