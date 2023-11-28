@@ -36,6 +36,7 @@ void Fourier::calculateCacheBandLimited(){
         float rollOffPercent = 50.0f;
         // we divide the limit by 2 because
         harmonicLimitFloat /= 2;
+        harmonicLimitFloat += 1; // we add one because the first bin is the DC values which is zero
         int harmonicLimitInt = std::max(1, static_cast<int>(harmonicLimitFloat));
         
         idftBand(smCache.resynthesized[band],
@@ -89,10 +90,10 @@ void Fourier::idftBand(std::vector<float>& resynthesized,
     }
     
     convertPolarToCartesian(smCache.polarTempBL, smCache.rectTempBL);
+    
     smJuriHock.ifft(smCache.rectTempBL, resynthesized);
     
-    // ??
-//    applyLinearSlant(tempResynthesized, nCycles);
+    applyLinearSlant(resynthesized);
 }
 
 void Fourier::convertCartesianToPolar(std::vector<std::complex<float>>& dft, std::vector<float>& polar){
@@ -117,16 +118,14 @@ void Fourier::convertPolarToCartesian(std::vector<float>& polar, std::vector<std
     }
 }
 
-void Fourier::applyLinearSlant(std::vector<float>& waveform, int nCycles) {
-    for(int cycleIndex = 0; cycleIndex < nCycles; cycleIndex++){
-        float startValue = waveform[cycleIndex * WTSIZE];
-        float endValue = waveform[(cycleIndex + 1) * WTSIZE - 1];
-        float delta = endValue - startValue;
+void Fourier::applyLinearSlant(std::vector<float>& waveform) {
+    float startValue = waveform[0];
+    float endValue = waveform[WTSIZE - 1];
+    float delta = endValue - startValue;
 
-        for (int i = 0; i < WTSIZE; ++i) {
-            float ramp = i / static_cast<float>(WTSIZE - 1);
-            waveform[cycleIndex * WTSIZE + i] -= (startValue + delta * ramp);
-        }
+    for (int i = 0; i < WTSIZE; ++i) {
+        float ramp = i / static_cast<float>(WTSIZE - 1);
+        waveform[i] -= (startValue + delta * ramp);
     }
 }
 

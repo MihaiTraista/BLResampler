@@ -47,7 +47,7 @@ private:
     
     static void convertCartesianToPolar(std::vector<std::complex<float>>& dft, std::vector<float>& polar);
     static void convertPolarToCartesian(std::vector<float>& polar, std::vector<std::complex<float>>& dft);
-    static void applyLinearSlant(std::vector<float>& waveform, int nCycles);
+    static void applyLinearSlant(std::vector<float>& waveform);
     static void appendCachesToVectors(std::vector<float>& mPolarCycles,
                                       std::array<std::vector<float>, N_WT_BANDS>& mResynthesizedCycles);
     static void clearCacheBandLimited();
