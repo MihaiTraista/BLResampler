@@ -12,10 +12,7 @@
 
 DataModel::DataModel(std::function<void()> workerThreadFinishedJobCallbackRef):
     workerThreadFinishedJobCallback(workerThreadFinishedJobCallbackRef)
-{
-    for(auto& vec : mTempResynthesized)
-        vec = std::vector<float>(WTSIZE, 0.0f);    
-}
+{}
 
 DataModel::~DataModel(){
     // Stop the worker thread safely
@@ -57,11 +54,9 @@ void DataModel::calculateZeroCrossingsAndUpdateVectors(){
 
 void DataModel::commit(){
     
-    const float* mAudioBufferData = mOrigAudioData.data();
+    int lenOfOriginalCycle = mClosestZeroCrossingEnd - mClosestZeroCrossingStart;
 
-    int originalLengthOfCycle = mClosestZeroCrossingEnd - mClosestZeroCrossingStart;
-
-    if(originalLengthOfCycle < 3)
+    if(lenOfOriginalCycle < 3)
         return;
 
     // set to true all indexes from the original file that are going to be used
@@ -70,10 +65,37 @@ void DataModel::commit(){
     }
 
     // make a temp origCycle and copy the sampled from orig file
-    std::vector<float> origCycle(originalLengthOfCycle, 0.0f);
+    std::vector<float> origCycle(lenOfOriginalCycle, 0.0f);
+
+    int maxAmp = copyAndNormalizeCycleFromAudioBufferDataAndNormalize(origCycle, lenOfOriginalCycle);
+
+    mAmpOfOriginalCycles.insert(mAmpOfOriginalCycles.end(), WTSIZE, maxAmp);
+
+    pResampler->resizeCycle(origCycle, mTempResampledCycle);
+    
+    mResampledCycles.insert(mResampledCycles.end(), mTempResampledCycle.begin(), mTempResampledCycle.end());
+                
+    Task task;
+
+    task.resampledCycle = mTempResampledCycle;
+
+    {
+        std::lock_guard<std::mutex> lock(queueMutex);
+        taskQueue.push(task);
+    }
+
+    startWorkerThread();
+}
+
+int DataModel::copyAndNormalizeCycleFromAudioBufferDataAndNormalize(std::vector<float>& origCycle,
+                                                                    const int& lenOfOriginalCycle){
+
+    const float* mAudioBufferData = mOrigAudioData.data();
+    
     float maxAmp = 0.0f;
 
-    for(int i = 0; i < originalLengthOfCycle; ++i){
+    // normalize the cycle
+    for(int i = 0; i < lenOfOriginalCycle; ++i){
         float val = mAudioBufferData[i + mClosestZeroCrossingStart];
         origCycle[i] = val;
         maxAmp = std::max(fabs(val), maxAmp);
@@ -82,25 +104,10 @@ void DataModel::commit(){
     float gainNormalizer = (1.0f / maxAmp) * 0.9f;
     for (float& sample : origCycle)
         sample *= gainNormalizer;
-
-    mAmpOfOriginalCycles.insert(mAmpOfOriginalCycles.end(), WTSIZE, maxAmp);
-
-    pResampler->resizeCycle(origCycle, mTempResampledCycle);
     
-    mResampledCycles.insert(mResampledCycles.end(), mTempResampledCycle.begin(), mTempResampledCycle.end());
-
-    Task task;
-    
-    task.resampledCycle = mTempResampledCycle;
-    
-    {
-        std::lock_guard<std::mutex> lock(queueMutex);
-        taskQueue.push(task);
-    }
-
-    startWorkerThread();
-
+    return maxAmp;
 }
+
 
 void DataModel::startWorkerThread() {
     if (!isWorkerThreadBusy.load()) {
@@ -128,24 +135,10 @@ void DataModel::workerThreadFunction() {
             taskQueue.pop();
         }
 
-        performDFTandAppendResynthesizedCycleForAllBands(task.resampledCycle);
-        
+        Fourier::execute(task.resampledCycle,
+                         mPolarCycles,
+                         mResynthesizedCycles);
+    
         workerThreadFinishedJobCallback();
     }
 }
-
-
-void DataModel::performDFTandAppendResynthesizedCycleForAllBands(std::vector<float>& resampledCycle){
-    
-    Fourier::fill(resampledCycle, mTempPolar, mTempResynthesized);
-    
-    for(int band = 0; band < N_WT_BANDS; band++){
-        mResynthesizedCycles[band].insert(mResynthesizedCycles[band].end(),
-                                          mTempResynthesized[band].begin(),
-                                          mTempResynthesized[band].end());
-    }
-
-    mPolarCycles.insert(mPolarCycles.end(), mTempPolar.begin(), mTempPolar.end());
-
-}
-

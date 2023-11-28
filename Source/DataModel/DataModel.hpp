@@ -100,7 +100,9 @@ public:
                 resampledCycle[i] = mResampledCycles[cycleIndex * WTSIZE + i];
             }
 
-            performDFTandAppendResynthesizedCycleForAllBands(resampledCycle);
+            Fourier::execute(resampledCycle,
+                             mPolarCycles,
+                             mResynthesizedCycles);
         }
 
         return static_cast<int>(nCycles);
@@ -138,11 +140,14 @@ public:
     }
     
     void commit();
-    void performDFTandAppendResynthesizedCycleForAllBands(std::vector<float>& resampledCycle);
 
 private:
     void startWorkerThread();
     void workerThreadFunction();
+    int copyAndNormalizeCycleFromAudioBufferDataAndNormalize(std::vector<float>& origCycle,
+                                                             const int& lenOfOriginalCycle);
+
+
 
     int mStartSampleIndex = 0;
     int mCycleLenHint = DEFAULT_CYCLE_LEN_HINT;
@@ -171,8 +176,6 @@ private:
     std::atomic<bool> isWorkerThreadBusy = false;
     std::thread workerThread;
     std::vector<float> mTempResampledCycle = std::vector<float>(WTSIZE, 0.0f);
-    std::vector<float> mTempPolar = std::vector<float>(WTSIZE * 2, 0.0f);
-    std::array<std::vector<float>, N_WT_BANDS> mTempResynthesized;
     
     std::queue<Task> taskQueue;
     std::mutex queueMutex;

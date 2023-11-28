@@ -42,6 +42,10 @@
         <FILE id="u2cm9n" name="Fourier.cpp" compile="1" resource="0" file="Source/Fourier/Fourier.cpp"/>
         <FILE id="dWIF0W" name="Fourier.hpp" compile="0" resource="0" file="Source/Fourier/Fourier.hpp"/>
       </GROUP>
+      <GROUP id="{80F7AD0F-7B16-AC58-81CD-DA87D427D369}" name="JuriHock">
+        <FILE id="LWOOCO" name="FFT.h" compile="0" resource="0" file="Source/JuriHock/FFT.h"/>
+        <FILE id="cad8zn" name="RFFT.h" compile="0" resource="0" file="Source/JuriHock/RFFT.h"/>
+      </GROUP>
       <GROUP id="{AC44D4D1-998D-53D0-C6E1-58BA55F034C7}" name="FileHandler">
         <FILE id="OAh97u" name="FileHandler.cpp" compile="1" resource="0" file="Source/FileHandler/FileHandler.cpp"/>
         <FILE id="VdwZck" name="FileHandler.hpp" compile="0" resource="0" file="Source/FileHandler/FileHandler.hpp"/>

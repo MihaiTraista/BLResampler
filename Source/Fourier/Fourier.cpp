@@ -5,95 +5,106 @@
 
 #include "Fourier.hpp"
 
+stftpitchshift::RFFT Fourier::smJuriHock;
+Fourier::Cache Fourier::smCache;
 
-void Fourier::fill(const std::vector<float>& resampledCycle,
-                   std::vector<float>& polar,
-                   std::array<std::vector<float>, N_WT_BANDS>& resynthesized){
-
-    std::array<std::vector<float>, N_WT_BANDS> resynthesizedWorker;
-    for(auto& vec : resynthesizedWorker)
-        vec = std::vector<float>(WTSIZE, 0.0f);
-
-    Fourier::fillDftPolar(resampledCycle, polar);
+void Fourier::execute(const std::vector<float>& resampledCycle,
+                      std::vector<float>& mPolarCycles,
+                      std::array<std::vector<float>, N_WT_BANDS>& mResynthesizedCycles){
     
+    calculateCacheRect(resampledCycle);
+    calculateCachePolar();
+    calculateCacheBandLimited();
+    
+    appendCachesToVectors(mPolarCycles, mResynthesizedCycles);
+}
+
+void Fourier::calculateCacheRect(const std::vector<float>& resampledCycle){
+    smJuriHock.fft(resampledCycle, smCache.rect);
+
+    // THIS IS VERY IMPORTANT !!! The DC and Niquist must be zeroed out
+    smCache.rect[0] = smCache.rect[smCache.rect.size() - 1] = 0;
+}
+void Fourier::calculateCachePolar(){
+    convertCartesianToPolar(smCache.rect, smCache.polar);
+}
+
+void Fourier::calculateCacheBandLimited(){
     for(int band = 0; band < N_WT_BANDS; band++){
         float harmonicsLimit = 22050.0f / baseFrequencies[band];
         float rollOffPercent = 50.0f;
 
-        Fourier::idft(polar, resynthesizedWorker[band], harmonicsLimit, rollOffPercent, 1);
-    }
-    
-//    isWorkerThreadBusy.store(false);
-    std::swap(resynthesized, resynthesizedWorker);
-}
-
-
-void Fourier::fillDftPolar(const std::vector<float>& rawWavetable, std::vector<float>& polarValues){
-    float realImag[WTSIZE * 2], real, imag;
-
-    for(int i = 0, k = 0; k < WTSIZE; i += 2, k++){
-        realImag[i] = realImag[i + 1] = 0.0f;
-        for(int n = 0; n < WTSIZE; n++){
-            realImag[i] += static_cast<float>(rawWavetable[n] * std::cos((k * n * TWOPI)/WTSIZE));
-            realImag[i + 1] -= static_cast<float>(rawWavetable[n] * std::sin((k * n * TWOPI)/WTSIZE));
-        }
-        realImag[i] /= WTSIZE;
-        realImag[i+1] /= WTSIZE;
-    }
-
-    // convert from rectangular (real and imaginary) to polar (amp and phase)
-    for (int i = 0; i < WTSIZE; i++){
-        real = realImag[i * 2];
-        imag = realImag[i * 2 + 1];
-        polarValues[i * 2] = sqrt(pow(real, 2) + pow(imag, 2));
-        polarValues[i * 2 + 1] = atan2(imag, real);
+        idftBand(smCache.resynthesized[band],
+                 harmonicsLimit,
+                 rollOffPercent);
     }
 }
 
-void Fourier::idft(const std::vector<float>& polarValues,
-                   std::vector<float>& resynthesized,
-                   int harmonicLimit,
-                   float rollOffPercent,
-                   int nCycles){
+void Fourier::appendCachesToVectors(std::vector<float>& mPolarCycles,
+                                    std::array<std::vector<float>, N_WT_BANDS>& mResynthesizedCycles){
     
-    std::vector<float> tempResynthesized = std::vector<float>(polarValues.size() / 2, 0.0f);
-    resynthesized.resize(polarValues.size() / 2, 0.0f);
+    mPolarCycles.insert(mPolarCycles.end(), smCache.polar.begin(), smCache.polar.end());
+    
+    for(int band = 0; band < N_WT_BANDS; band++){
+        mResynthesizedCycles[band].insert(mResynthesizedCycles[band].end(),
+                                          smCache.resynthesized[band].begin(),
+                                          smCache.resynthesized[band].end());
+    }
+}
+
+void Fourier::idftBand(std::vector<float>& resynthesized,
+                       int harmonicLimit,
+                       float rollOffPercent){
+
+    // NOT SURE ABOUT THIS
+    harmonicLimit /= 2;
     
     float amp, phase, roll;
     float startRolloff = harmonicLimit - harmonicLimit * (rollOffPercent / 100.0f);
-//    startRolloff = 200;
-
-    for(int cycleIndex = 0; cycleIndex < nCycles; cycleIndex++){
+    
+    for(int i = 0; i < WTSIZE / 2; i++){
+        float magnitude = smCache.polar[i * 2];
+        float phase = smCache.polar[i * 2 + 1];
         
-        for (int i = 0; i < WTSIZE; i++) {     //  number of samples = WTSIZE
-            
-            tempResynthesized[i + cycleIndex * WTSIZE] = 0.0f;
-            
-            for (int h = 0; h < WTSIZE; h++) {   //  number of harmonics = WTSIZE
-                amp = polarValues[(h + cycleIndex * WTSIZE) * 2];
-                phase = polarValues[(h + cycleIndex * WTSIZE) * 2 + 1];
-
-                // roll off harmonics from startRolloff to harmonicLimit and zero out all higher harmonics
-                if (h < startRolloff){
-                    amp *= 1.0;
-                } else if (h >= startRolloff && h < harmonicLimit){
-                    roll = 1 - ((float)h - startRolloff) / (harmonicLimit - startRolloff);
-                    roll *= roll; // square roll for exponential roll off
-                    amp *= roll;
-                } else {
-                    amp *= 0.0;
-                }
-
-                float val = amp * cos(TWOPI * (i + cycleIndex * WTSIZE) * h / WTSIZE + phase);
-
-                tempResynthesized[i + cycleIndex * WTSIZE] += val;
-            }
+        if(i >= startRolloff && i < harmonicLimit){
+            roll = 1 - (static_cast<int>(i) - startRolloff) / (harmonicLimit - startRolloff);
+            roll *= roll; // square roll for exponential roll off
+            magnitude *= roll;
+        } else if(i > harmonicLimit){
+            break;
         }
+                    
+        smCache.polarTempBL[i * 2] = magnitude;
+        smCache.polarTempBL[i * 2 + 1] = phase;
     }
     
-    applyLinearSlant(tempResynthesized, nCycles);
+    convertPolarToCartesian(smCache.polarTempBL, smCache.rectTempBL);
+    smJuriHock.ifft(smCache.rectTempBL, resynthesized);
+    
+    // ??
+//    applyLinearSlant(tempResynthesized, nCycles);
+}
 
-    resynthesized = tempResynthesized;
+void Fourier::convertCartesianToPolar(std::vector<std::complex<float>>& dft, std::vector<float>& polar){
+    assert(dft.size() >= WTSIZE / 2);
+    assert(polar.size() == WTSIZE);
+    
+    for(int i = 0; i < WTSIZE / 2; i++){
+        polar[i * 2] = std::abs(dft[i]);        // magnitude
+        polar[i * 2 + 1] = std::arg(dft[i]);    // phase
+    }
+}
+
+void Fourier::convertPolarToCartesian(std::vector<float>& polar, std::vector<std::complex<float>>& dft){
+    assert(dft.size() >= WTSIZE / 2);
+    assert(polar.size() == WTSIZE);
+
+    for(int i = 0; i < WTSIZE / 2; i++){
+        float magnitude = polar[i * 2];
+        float phase = polar[i * 2 + 1];
+        
+        dft[i] = std::polar(magnitude, phase);
+    }
 }
 
 void Fourier::applyLinearSlant(std::vector<float>& waveform, int nCycles) {
@@ -108,3 +119,4 @@ void Fourier::applyLinearSlant(std::vector<float>& waveform, int nCycles) {
         }
     }
 }
+
