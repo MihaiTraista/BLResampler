@@ -31,13 +31,26 @@ void Fourier::calculateCachePolar(){
 
 void Fourier::calculateCacheBandLimited(){
     for(int band = 0; band < N_WT_BANDS; band++){
-        float harmonicsLimit = 22050.0f / baseFrequencies[band];
+        clearCacheBandLimited();
+        float harmonicLimitFloat = 22050.0f / baseFrequencies[band];
         float rollOffPercent = 50.0f;
-
+        // we divide the limit by 2 because
+        harmonicLimitFloat /= 2;
+        int harmonicLimitInt = std::max(1, static_cast<int>(harmonicLimitFloat));
+        
         idftBand(smCache.resynthesized[band],
-                 harmonicsLimit,
+                 harmonicLimitInt,
                  rollOffPercent);
     }
+}
+
+void Fourier::clearCacheBandLimited(){
+    std::fill(smCache.rectTempBL.begin(),
+              smCache.rectTempBL.end(),
+              0.0f);
+    std::fill(smCache.polarTempBL.begin(),
+              smCache.polarTempBL.end(),
+              0.0f);
 }
 
 void Fourier::appendCachesToVectors(std::vector<float>& mPolarCycles,
@@ -56,9 +69,6 @@ void Fourier::idftBand(std::vector<float>& resynthesized,
                        int harmonicLimit,
                        float rollOffPercent){
 
-    // NOT SURE ABOUT THIS
-    harmonicLimit /= 2;
-    
     float amp, phase, roll;
     float startRolloff = harmonicLimit - harmonicLimit * (rollOffPercent / 100.0f);
     

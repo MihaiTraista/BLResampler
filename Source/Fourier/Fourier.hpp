@@ -50,6 +50,7 @@ private:
     static void applyLinearSlant(std::vector<float>& waveform, int nCycles);
     static void appendCachesToVectors(std::vector<float>& mPolarCycles,
                                       std::array<std::vector<float>, N_WT_BANDS>& mResynthesizedCycles);
+    static void clearCacheBandLimited();
 
     static stftpitchshift::RFFT smJuriHock;
     static Cache smCache;
